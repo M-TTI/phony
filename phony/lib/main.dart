@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database/database.dart';
-import 'package:drift/drift.dart';
+import 'services/file_scanner.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,7 +34,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final database = AppDatabase();
+  final scanner = FileScanner();
   List<Song> songs = [];
+  bool isScanning = false;
 
   @override
   void initState() {
@@ -43,20 +45,26 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _loadSongs() async {
-    await database.insertSong(
-      SongsCompanion.insert(
-        title: 'Test Song',
-        duration: 180,
-        filePath: 'this/is/the/path',
-        imagePath: Value.absent(),
-        fileChecksum: Value.absent(),
-        hasCustomMetadata: Value.absent(),
-      ),
-    );
-
     final allSongs = await database.getAllSongs();
     setState(() {
       songs = allSongs;
+    });
+  }
+
+  Future<void> _scanMusic() async {
+    setState(() {
+      isScanning = true;
+    });
+
+    final files = await scanner.scanMusicDirectory();
+    print('Found ${files.length} MP3 files');
+
+    for (final file in files) {
+      print(file.path);
+    }
+
+    setState(() {
+      isScanning = false;
     });
   }
 
@@ -67,18 +75,33 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: songs.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: songs.length,
-              itemBuilder: (context, index) {
-                final song = songs[index];
-                return ListTile(
-                  title: Text(song.title),
-                  subtitle: Text('${song.duration} seconds'),
-                );
-              },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+                onPressed: isScanning ? null : _scanMusic,
+                child: isScanning
+                    ? const Text('Scanning...')
+                    : const Text('Scan Music Directory'),
             ),
+          ),
+          Expanded(
+            child: songs.isEmpty
+                ? const Center(child: Text('No songs in database'))
+                : ListView.builder(
+                    itemCount: songs.length,
+                    itemBuilder: (context, index) {
+                      final song = songs[index];
+                      return ListTile(
+                        title: Text(song.title),
+                        subtitle: Text('${song.duration} seconds'),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
