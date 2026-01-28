@@ -1,6 +1,11 @@
+import 'dart:io';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'database/database.dart';
 import 'services/file_scanner.dart';
+import 'services/metadata_extractor.dart';
+import 'models/song_metadata.dart';
+import 'services/checksum_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -35,8 +40,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final database = AppDatabase();
   final scanner = FileScanner();
+  final extractor = MetadataExtractor();
+  final checksumService = ChecksumService();
   List<Song> songs = [];
+  List<SongMetadata> scannedSongs = [];
   bool isScanning = false;
+
+  final isImporting = ValueNotifier<bool>(false);
+  final importProgress = ValueNotifier<int>(0);
+  final importTotal = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -45,7 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _loadSongs() async {
-    final allSongs = await database.getAllSongs();
+    final allSongs = await database.findAllSongs();
     setState(() {
       songs = allSongs;
     });
@@ -56,16 +68,92 @@ class _MyHomePageState extends State<MyHomePage> {
       isScanning = true;
     });
 
+    // Find .mp3 files
     final files = await scanner.scanMusicDirectory();
     print('Found ${files.length} MP3 files');
 
+    // Extract metadata from each file
     for (final file in files) {
-      print(file.path);
+      final metadata = await extractor.extractMetadata(file);
+      if (metadata != null) {
+        scannedSongs.add(metadata);
+      }
     }
 
     setState(() {
       isScanning = false;
     });
+
+    if (mounted) {
+      _showImportDialog(scannedSongs.length);
+    }
+  }
+
+  Future<void> _showImportDialog(int songCount) async {
+    return showDialog(
+      context: context,
+      builder: (buildContext) {
+        return AlertDialog(
+          title: const Text('Scan complete'),
+          content: Text('Found $songCount songs.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _importAllSongs();
+              },
+              child: const Text('Import All'),
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _importAllSongs() async {
+    isImporting.value = true;
+    importProgress.value = 0;
+    importTotal.value = scannedSongs.length;
+
+    for (int i = 0; i < importTotal.value; i++) {
+      final metadata = scannedSongs[i];
+
+      final file = File(metadata.filePath);
+      final checksum = await checksumService.generateChecksum(file);
+
+      final existing = await database.findSongByChecksum(checksum);
+
+      if (existing == null) {
+        await database.insertSong(
+          SongsCompanion.insert(
+            title: metadata.title,
+            duration: metadata.duration,
+            filePath: metadata.filePath,
+            imagePath: Value.absent(),
+            fileChecksum: Value.absent(),
+            hasCustomMetadata: Value(false),
+          ),
+        );
+        print('imported: ${metadata.title}');
+      } else {
+        print('skipped duplicate: ${metadata.title}');
+      }
+
+      importProgress.value = i + 1;
+    }
+
+    isImporting.value = false;
+
+    print('Import complete!');
+    scannedSongs.clear();
+
+    await _loadSongs();
   }
 
   @override

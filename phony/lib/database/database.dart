@@ -23,14 +23,24 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
-  Future<int> insertSong(SongsCompanion song) {
+  Future<int> insertSong(SongsCompanion song) async {
     return into(songs)
         .insert(song);
   }
 
-  Future<List<Song>> getAllSongs() {
+  Future<List<Song>> findAllSongs() async {
     return select(songs)
         .get();
+  }
+
+  Future<Song?> findSongById(int id) async {
+    return (select(songs)..where((s) => s.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<Song?> findSongByChecksum(String checksum) async {
+    return (select(songs)..where((s) => s.fileChecksum.equals(checksum)))
+        .getSingleOrNull();
   }
 }
 
