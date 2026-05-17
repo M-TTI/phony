@@ -40,12 +40,13 @@ MVVM + Repository Pattern + Provider for state management.
 
 ```
 lib/
-├── models/          # Data models
-├── repositories/    # Data access layer (abstracts DB queries)
-├── viewmodels/      # Business logic & state (uses Provider)
+├── models/          # Plain data classes (e.g. Song)
+├── repositories/    # Data access layer — abstract interfaces + Drift implementations
+├── databases/       # Drift schema, AppDatabase, generated *.g.dart files
+├── viewmodels/      # Business logic & state (uses Provider) — not yet implemented
 ├── views/           # Thin UI screens (consume ViewModels)
-├── services/        # Utilities (audio playback, file management)
-└── widgets/         # Reusable UI components
+├── services/        # Utilities (audio playback, file management) — not yet implemented
+└── widgets/         # Reusable UI components — not yet implemented
 ```
 
 Views should contain no business logic. ViewModels hold state and call repositories/services.
@@ -53,9 +54,16 @@ Views should contain no business logic. ViewModels hold state and call repositor
 ## Key Technical Details
 
 ### Database
-- Drift ORM with SQLite, stored at `$DOCUMENTS/app_database.sqlite` on Linux
+- Drift ORM with SQLite, stored via `getApplicationSupportDirectory()` (not a hardcoded path)
+- `Songs` table uses `@DataClassName('SongsData')` so Drift generates `SongsData` as the row type, keeping it separate from the plain `Song` model in `lib/models/`
+- `AppDatabase` exposes: `watchAllSongs()` (Stream), `findSongById(id)`, `insertSong(SongsCompanion)`, `deleteSong(id)`
 - After any schema change, run `dart run build_runner build` to regenerate `*.g.dart` files
 - `tools/command_manager.dart` is a standalone CLI for DB inspection (uses raw `sqlite3` package, not drift)
+
+### Repository Pattern
+- `lib/repositories/song_repository.dart` — abstract interface (`watchAll`, `findById`, `insert`, `delete`)
+- `lib/repositories/drift_song_repository.dart` — Drift implementation; maps `SongsData → Song` via `_toModel()`
+- ViewModels depend on the abstract `SongRepository`, never on `AppDatabase` or `SongsData` directly
 
 ### osu! Import Flow
 1. Extract `.osz` (zip) to temp directory

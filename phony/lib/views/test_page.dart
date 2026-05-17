@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phony/viewmodels/song_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class TestPage extends StatelessWidget {
   const TestPage({super.key, required this.title});
@@ -6,9 +8,11 @@ class TestPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<SongViewmodel>();
+    final songs = vm.songs; // used to create the LazyDatabase connection.
     return Column(
       children: [
-        Center(child: Text(title))
+        Center(child: Text(title)),
       ],
     );
   }

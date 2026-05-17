@@ -3,7 +3,8 @@ import 'package:sqlite3/sqlite3.dart';
 
 Map<String, String> commandHelper = {
   'List all songs': '1',
-  'Wipe database': '2',
+  'Seed database with test songs': '2',
+  'Wipe database': '3',
 };
 
 int main(List<String> args) {
@@ -24,11 +25,14 @@ int main(List<String> args) {
   try {
     switch (input) {
       case '1':
-        String dbPath = getDatabasePath();
-        findAllSongs(dbPath);
+        String dbPath = _getDatabasePath();
+        _findAllSongs(dbPath);
       case '2':
-        String dbPath = getDatabasePath();
-        wipeDatabase(dbPath);
+        String dbPath = _getDatabasePath();
+        _seedDatabase(dbPath);
+      case '3':
+        String dbPath = _getDatabasePath();
+        _wipeDatabase(dbPath);
         stdout.writeln('Database wiped.');
       default:
         stdout.writeln('No argument provided');
@@ -40,34 +44,44 @@ int main(List<String> args) {
   return 0;
 }
 
-String getDatabasePath() {
-  String? documentsPath;
-  try {
-    final result = Process.runSync('xdg-user-dir', ['DOCUMENTS']);
-    if (result.exitCode == 0) {
-      documentsPath = result.stdout.toString().trim();
-    }
-  } catch (e) {
-    stdout.writeln('Error running xdg-user-dir: $e');
-  }
-
-  if (documentsPath == null || documentsPath.isEmpty) {
-    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-    if (home == null) {
-      throw Exception('Could not find home path');
-    }
-
-    documentsPath = '$home/Documents';
-  }
-
+String _getDatabasePath() {
   if (Platform.isLinux) {
-    return '$documentsPath/app_database.sqlite';
+    final xdgDataHome = Platform.environment['XDG_DATA_HOME'];
+    final home = Platform.environment['HOME'];
+
+    final dataDir = (xdgDataHome != null && xdgDataHome.isNotEmpty)
+        ? xdgDataHome
+        : '$home/.local/share';
+
+    return '$dataDir/com.example.phony/phony_database.sqlite';
   }
 
   throw Exception('Database commands not implemented on ${Platform.operatingSystem}');
 }
 
-void wipeDatabase(String dbPath) {
+void _seedDatabase(String dbPath) {
+  final file = File(dbPath);
+  if (!file.existsSync()) {
+    throw Exception('Database not found at: $dbPath');
+  } else {
+    Database db = sqlite3.open(dbPath);
+    final sql = 'INSERT INTO songs (title, artist, file_path, duration, has_meta_data) VALUES'
+        '("Phony", "Kafu", "/home/mtti/Music/phony.mp3", 190, false),'
+        '("Lagtrain", "Will Stetson, Inabakumori", "/home/mtti/Music/Lagtrain.mp3", 253, false),'
+        '("Niramenkko", "", "/home/mtti/Music/Niramenkko.ogg", 158, false),'
+        '("The Pretender", "Infected Mushrooms", "/home/mtti/Music/\'The Pretender\'.mp3", 394, false),'
+        '("Yomi Yori", "Imperial Circus Dead Decadence", "/home/mtti/Music/\'Yomi Yori.ogg\'.mp3", 498, false);';
+
+    try {
+      stdout.writeln('Inserting songs');
+      db.execute(sql);
+    } catch (e) {
+      stdout.writeln('Could not seed the database: $e');
+    }
+  }
+}
+
+void _wipeDatabase(String dbPath) {
   final file = File(dbPath);
   if (!file.existsSync()) {
     throw Exception('Database not found at: $dbPath');
@@ -76,7 +90,7 @@ void wipeDatabase(String dbPath) {
   }
 }
 
-void findAllSongs(String dbPath) {
+void _findAllSongs(String dbPath) {
   final file = File(dbPath);
   if (!file.existsSync()) {
     throw Exception('Database not found at: $dbPath');
@@ -87,7 +101,7 @@ void findAllSongs(String dbPath) {
     stdout.writeln('${'title'.padRight(30)} | duration');
     stdout.writeln('${'-' * 30}-+---------');
     for (final row in result) {
-      final duration = formatDuration(row['duration'] as int);
+      final duration = _formatDuration(row['duration'] as int);
       final title = row['title'] as String;
       stdout.writeln('${title.padRight(30)} | $duration');
     }
@@ -96,7 +110,7 @@ void findAllSongs(String dbPath) {
   }
 }
 
-String formatDuration(int totalSeconds) {
+String _formatDuration(int totalSeconds) {
   final minutes = totalSeconds ~/ 60;
   final seconds = totalSeconds % 60;
 
