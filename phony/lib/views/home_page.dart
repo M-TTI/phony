@@ -12,7 +12,8 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return SafeArea(
-        child: Material(
+      child: Material(
+        color: t.background,
         child: Stack(
           clipBehavior: Clip.hardEdge,
           children: [
@@ -20,10 +21,7 @@ class HomePage extends StatelessWidget {
               children: [
                 TopBar(title: title),
                 Expanded(
-                  child: Container(
-                    color: t.background,
-                    child: const SongsView(),
-                  ),
+                  child: const SongsView(),
                 ),
                 Column(
                   children: [

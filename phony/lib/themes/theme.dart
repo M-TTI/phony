@@ -13,6 +13,8 @@ const onPrimaryMuted = Color(0xFFC8A9B4);
 const border = Color(0xFFBDBDBD);
 const black = Color(0xFF000000);
 const shadow = Color(0x40000000);
+const inkHovered = Color(0x0DFFFFFF);
+const inkPressed = Color(0x19FFFFFF);
 
 // Icons
 const menuIcon = Icons.menu;

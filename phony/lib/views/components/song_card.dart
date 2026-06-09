@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:phony/models/song.dart';
 import 'package:phony/themes/theme.dart' as t;
@@ -19,68 +20,77 @@ class SongCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return Stack(
-      children: [
-        SizedBox(
-          height: 80,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(width: 16),
-              _coverArt(),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: () => {}, // TODO: Implement Play
+      overlayColor: WidgetStateColor.resolveWith((states) {
+        if (states.contains(WidgetState.hovered)) return t.inkHovered;
+        if (states.contains(WidgetState.hovered)) return t.inkPressed;
+        return Colors.transparent;
+      }),
+      mouseCursor: SystemMouseCursors.click,
+      child: Stack(
+        children: [
+          SizedBox(
+            height: 80,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(width: 16),
+                _coverArt(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        song.title,
+                        style: const TextStyle(
+                          color: t.onPrimary,
+                          fontSize: 16,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        song.artist ?? 'Unknown artist',
+                        style: const TextStyle(
+                          color: t.onPrimaryMuted,
+                          fontSize: 10,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
                   children: [
                     Text(
-                      song.title,
-                      style: const TextStyle(
-                        color: t.onPrimary,
-                        fontSize: 16,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      song.artist ?? 'Unknown artist',
+                      _formatDuration(song.duration),
                       style: const TextStyle(
                         color: t.onPrimaryMuted,
-                        fontSize: 10,
+                        fontSize: 12,
                       ),
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(right: 12, left: 4),
+                      child: IconButton(
+                        onPressed: () => {},
+                        icon: Icon(Icons.more_vert_rounded, color: t.onPrimary, size: 24),
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    _formatDuration(song.duration),
-                    style: const TextStyle(
-                      color: t.onPrimaryMuted,
-                      fontSize: 12,
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(right: 12, left: 4),
-                    child: IconButton(
-                      onPressed: () => {},
-                      icon: Icon(Icons.more_vert_rounded, color: t.onPrimary, size: 24),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const Positioned(
-          left: 80,
-          right: 0,
-          bottom: 0,
-          child: SizedBox(height: 1, child: ColoredBox(color: t.backgroundMuted)),
-        ),
-      ],
+          const Positioned(
+            left: 80,
+            right: 0,
+            bottom: 0,
+            child: SizedBox(height: 1, child: ColoredBox(color: t.backgroundMuted)),
+          ),
+        ],
+      ),
     );
   }
 

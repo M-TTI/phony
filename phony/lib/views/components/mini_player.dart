@@ -7,6 +7,7 @@ class MiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 50,
       color: t.backgroundMuted,
       child: Row(
         children: [
