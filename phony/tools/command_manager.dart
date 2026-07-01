@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:sqlite3/sqlite3.dart';
 
 Map<String, String> commandHelper = {
@@ -56,7 +57,9 @@ String _getDatabasePath() {
     return '$dataDir/com.example.phony/phony_database.sqlite';
   }
 
-  throw Exception('Database commands not implemented on ${Platform.operatingSystem}');
+  throw Exception(
+    'Database commands not implemented on ${Platform.operatingSystem}',
+  );
 }
 
 void _seedDatabase(String dbPath) {
@@ -65,16 +68,26 @@ void _seedDatabase(String dbPath) {
     throw Exception('Database not found at: $dbPath');
   } else {
     Database db = sqlite3.open(dbPath);
-    final sql = 'INSERT INTO songs (title, artist, file_path, duration, has_meta_data) VALUES'
-        '("Phony", "Kafu", "/home/mtti/Music/phony.mp3", 190, false),'
-        '("Lagtrain", "Will Stetson, Inabakumori", "/home/mtti/Music/Lagtrain.mp3", 253, false),'
-        '("Niramenkko", "", "/home/mtti/Music/Niramenkko.ogg", 158, false),'
-        '("The Pretender", "Infected Mushrooms", "/home/mtti/Music/\'The Pretender\'.mp3", 394, false),'
-        '("Yomi Yori", "Imperial Circus Dead Decadence", "/home/mtti/Music/\'Yomi Yori.ogg\'.mp3", 498, false);';
+    final sqlFiles =
+        'INSERT INTO song_files VALUES'
+        '(1, "/home/mtti/Music/phony.mp3", "Phony", "Kafu", 190, ""),'
+        '(2, "/home/mtti/Music/Lagtrain.mp3", "Lagtrain", "Will Stetson, Inabakumori", 253, ""),'
+        '(3, "/home/mtti/Music/Niramenkko.ogg", "Niramenkko", "", 158, ""),'
+        '(4, "/home/mtti/Music/\'The Pretender\'.mp3", "The Pretender", "Infected Mushrooms", 394, ""),'
+        '(5, "/home/mtti/Music/\'Yomi Yori.ogg\'.mp3", "yomi yori", "Imperial Circus Dead Decadence", 498, "");';
+
+    final sqlSongs =
+        'INSERT INTO songs (title, artist, song_file_id, duration, has_meta_data) VALUES'
+        '("Phony", "Kafu", 1, 190, false),'
+        '("Lagtrain", "Will Stetson, Inabakumori", 2, 253, false),'
+        '("Niramenkko", "", "3", 158, false),'
+        '("The Pretender", "Infected Mushrooms", "4", 394, false),'
+        '("Yomi Yori", "Imperial Circus Dead Decadence", "5", 498, false);';
 
     try {
       stdout.writeln('Inserting songs');
-      db.execute(sql);
+      db.execute(sqlFiles);
+      db.execute(sqlSongs);
     } catch (e) {
       stdout.writeln('Could not seed the database: $e');
     }
