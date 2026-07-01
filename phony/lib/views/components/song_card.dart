@@ -62,10 +62,13 @@ class SongCard extends StatelessWidget {
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.only(right: 12, left: 4),
+                      padding: const EdgeInsets.only(right: 8, left: 4),
                       child: IconButton(
                         onPressed: () => {},
-                        icon: Icon(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(
                           Icons.more_vert_rounded,
                           color: t.onPrimary,
                           size: 24,
