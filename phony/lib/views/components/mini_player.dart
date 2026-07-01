@@ -8,6 +8,7 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: final vm = context.watch<PlayerViewModel>();
     return GestureDetector(
       onTap: openCommand,
       child: Container(
@@ -16,7 +17,7 @@ class MiniPlayer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             LinearProgressIndicator(
-              value: 0.4, // TODO: Wire it to song progress,
+              value: 0.4, // TODO: vm.position,
               minHeight: 3,
               backgroundColor: t.background,
               valueColor: AlwaysStoppedAnimation<Color>(t.primary),
@@ -25,16 +26,11 @@ class MiniPlayer extends StatelessWidget {
             Row(
               children: [
                 SizedBox(width: 16),
-                Expanded(
-                  child: Text('Current song playing'),
-                ),
+                Expanded(child: Text('Current song playing')),
                 IconButton(
                   // TODO: Implement Play Button
                   onPressed: () => {},
-                  icon: Icon(
-                    Icons.play_arrow_rounded,
-                    color: t.onPrimary,
-                  ),
+                  icon: Icon(Icons.play_arrow_rounded, color: t.onPrimary),
                 ),
                 SizedBox(width: 8),
               ],

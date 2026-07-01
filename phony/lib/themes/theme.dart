@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Colors
 const background = Color(0xFF433D56);
 const backgroundMuted = Color(0xFF675F81);
+const backgroundDark = Color(0xFF353045);
 const primary = Color(0xFFFF2E7E);
 const primaryHovered = Color(0xFF9E3158);
 const primaryPressed = Color(0xFFFF6BA3);
@@ -29,9 +30,7 @@ final ButtonStyle _filledButtonStyle = ButtonStyle(
     return primary;
   }),
   foregroundColor: WidgetStatePropertyAll(onPrimary),
-  shape: WidgetStatePropertyAll(
-    const ContinuousRectangleBorder(),
-  ),
+  shape: WidgetStatePropertyAll(const ContinuousRectangleBorder()),
   padding: WidgetStatePropertyAll(
     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
   ),
