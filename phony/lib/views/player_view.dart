@@ -1,21 +1,32 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:phony/models/queue_source.dart';
 import 'package:phony/models/song.dart';
 import 'package:phony/themes/theme.dart' as t;
+import 'package:phony/viewmodels/player_viewmodel.dart';
 import 'package:phony/views/components/cover_art.dart';
+import 'package:provider/provider.dart';
 
-class PlayerView extends StatelessWidget {
+class PlayerView extends StatefulWidget {
   const PlayerView({
     super.key,
-    this.song,
     required this.scrollController,
     required this.closeCommand,
+    required this.onSourceTap,
   });
 
-  final Song? song;
   final ScrollController scrollController;
   final VoidCallback closeCommand;
+  final void Function(QueueSource) onSourceTap;
+
+  @override
+  State<PlayerView> createState() => _PlayerViewState();
+}
+
+class _PlayerViewState extends State<PlayerView> {
+  double? _dragValue;
 
   String _formatDuration(double seconds) {
     final int total = seconds.round();
@@ -26,176 +37,297 @@ class PlayerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: final vm = context.watch<PlayerViewModel>();
-    const double position = 0.4; // TODO: vm.position
-    final double duration = (song?.duration ?? 0).toDouble();
+    final playerVm = context.watch<PlayerViewmodel>();
+    final Song? song = playerVm.currentSong;
 
-    return Container(
+    final double maxSeconds = playerVm.duration.inSeconds.toDouble();
+    final double sliderMax = maxSeconds > 0 ? maxSeconds : 1.0;
+    final double sliderValue =
+        (_dragValue ?? playerVm.position.inSeconds.toDouble()).clamp(
+          0.0,
+          sliderMax,
+        );
+
+    final String? artist = song?.artist;
+    final String artistLabel = (artist == null || artist.isEmpty)
+        ? '-'
+        : artist;
+
+    final QueueSource? source = playerVm.source;
+    final String? sourceLabel = switch (source) {
+      null => null,
+      LibraryQueueSource() => 'Library',
+      PlaylistQueueSource(:final playlist) => playlist.name,
+    };
+
+    return Material(
       color: t.backgroundDark,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Scale the cover art to the available space rather than a fixed
-          // size, so it works on narrow phones and wide desktop windows alike.
-          final double coverSize = math
-              .min(constraints.maxWidth * 0.8, constraints.maxHeight * 0.45)
-              .clamp(140.0, 360.0);
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double coverSize = math
+                .min(constraints.maxWidth * 0.8, constraints.maxHeight * 0.45)
+                .clamp(140.0, 360.0);
 
-          return CustomScrollView(
-            controller: scrollController,
-            slivers: [
-              SliverFillRemaining(
-                // Fill the sheet's viewport so the Spacers can distribute
-                // space, while still scrolling if it's shorter than the content.
-                hasScrollBody: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      // Top bar spans the full width so the close button stays
-                      // pinned to the edge regardless of window size.
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: const Icon(Icons.keyboard_arrow_down),
-                          onPressed: closeCommand,
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          // Cap the content width so it stays readable on
-                          // desktop while the top bar keeps the full width.
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 480),
-                            child: Column(
-                              children: [
-                                const Spacer(),
-                                CoverArt(
-                                  size: coverSize,
-                                  imagePath: song?.imagePath,
-                                ),
-                                const SizedBox(height: 32),
-                                Text(
-                                  song?.title ?? '-',
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: t.onPrimary,
+            return CustomScrollView(
+              controller: widget.scrollController,
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        Stack(
+                          alignment: .center,
+                          children: [
+                            Align(
+                              alignment: .centerLeft,
+                              child: IconButton(
+                                icon: const Icon(t.arrowDownIcon),
+                                onPressed: widget.closeCommand,
+                              ),
+                            ),
+                            if (source != null)
+                              InkWell(
+                                onTap: () => widget.onSourceTap(source),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    children: [
+                                      const Text(
+                                        'PLAYING FROM',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          letterSpacing: 1.5,
+                                          color: t.onPrimaryMuted,
+                                        ),
+                                      ),
+                                      Text(
+                                        sourceLabel!,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: .w600,
+                                          color: t.onPrimary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: .ellipsis,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                if (song?.artist != null &&
-                                    song!.artist!.isNotEmpty)
+                              ),
+                          ],
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 480),
+                              child: Column(
+                                children: [
+                                  const Spacer(),
+                                  CoverArt(
+                                    size: coverSize,
+                                    imagePath: song?.imagePath,
+                                  ),
+                                  const SizedBox(height: 32),
                                   Text(
-                                    song!.artist!,
+                                    song?.title ?? '-',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: .bold,
+                                      color: t.onPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: .ellipsis,
+                                  ),
+                                  Text(
+                                    artistLabel,
                                     style: const TextStyle(
                                       fontSize: 16,
                                       color: t.onPrimaryMuted,
                                     ),
                                     maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                    overflow: .ellipsis,
                                   ),
-                                const SizedBox(height: 24),
-                                Row(
-                                  children: [
-                                    Text(
-                                      _formatDuration(position),
-                                      style: const TextStyle(
-                                        color: t.onPrimaryMuted,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Slider(
-                                        value: position,
-                                        max: 1, // TODO: duration,
-                                        activeColor: t.primary,
-                                        onChanged: (double value) {},
-                                        // TODO: vm.seek(value)
-                                      ),
-                                    ),
-                                    Text(
-                                      _formatDuration(duration),
-                                      style: const TextStyle(
-                                        color: t.onPrimaryMuted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                  const SizedBox(height: 24),
+                                  Row(
                                     children: [
-                                      IconButton(
-                                        iconSize: 24,
-                                        color: t.onPrimaryMuted,
-                                        icon: const Icon(Icons.shuffle_rounded),
-                                        onPressed:
-                                            () {}, // TODO: vm.toggleShuffle()
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        iconSize: 40,
-                                        color: t.onPrimary,
-                                        icon: const Icon(
-                                          Icons.skip_previous_rounded,
+                                      Text(
+                                        _formatDuration(sliderValue),
+                                        style: const TextStyle(
+                                          color: t.onPrimaryMuted,
                                         ),
-                                        onPressed: () {}, // TODO: vm.previous()
                                       ),
-                                      const SizedBox(width: 8),
-                                      Stack(
-                                        alignment: AlignmentGeometry.center,
-                                        children: [
-                                          Icon(
-                                            Icons.circle,
-                                            color: t.onPrimary,
-                                            size: 60,
+                                      Expanded(
+                                        child: Slider(
+                                          value: sliderValue,
+                                          max: sliderMax,
+                                          activeColor: t.primary,
+                                          onChanged: (double value) => setState(
+                                            () => _dragValue = value,
                                           ),
-                                          IconButton(
-                                            iconSize: 64,
-                                            color: t.primary,
-                                            // TODO: swap with pause on isPlaying
-                                            icon: const Icon(
-                                              Icons.play_circle_fill_rounded,
-                                            ),
-                                            onPressed:
-                                                () {}, // TODO: vm.togglePlay()
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        iconSize: 40,
-                                        color: t.onPrimary,
-                                        icon: const Icon(
-                                          Icons.skip_next_rounded,
+                                          onChangeEnd: (double value) {
+                                            context
+                                                .read<PlayerViewmodel>()
+                                                .seek(
+                                                  Duration(
+                                                    seconds: value.round(),
+                                                  ),
+                                                );
+                                            setState(() => _dragValue = null);
+                                          },
                                         ),
-                                        onPressed: () {}, // TODO: vm.next()
                                       ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        iconSize: 24,
-                                        color: t.onPrimaryMuted,
-                                        icon: const Icon(Icons.repeat_rounded),
-                                        onPressed:
-                                            () {}, // TODO: vm.toggleRepeat()
+                                      Text(
+                                        _formatDuration(maxSeconds),
+                                        style: const TextStyle(
+                                          color: t.onPrimaryMuted,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                const Spacer(),
-                              ],
+                                  FittedBox(
+                                    fit: .scaleDown,
+                                    child: Row(
+                                      mainAxisSize: .min,
+                                      children: [
+                                        IconButton(
+                                          iconSize: 24,
+                                          color: t.onPrimaryMuted,
+                                          icon: Icon(
+                                            t.shuffleIcon,
+                                            color: playerVm.shuffleEnabled
+                                                ? t.primary
+                                                : t.onPrimaryMuted,
+                                          ),
+                                          onPressed: () =>
+                                              playerVm.toggleShuffle(),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          iconSize: 40,
+                                          color: t.onPrimary,
+                                          icon: const Icon(t.previousIcon),
+                                          onPressed: () => playerVm.previous(),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Stack(
+                                          alignment: .center,
+                                          children: [
+                                            Icon(
+                                              Icons.circle,
+                                              color: t.onPrimary,
+                                              size: 60,
+                                            ),
+                                            IconButton(
+                                              iconSize: 64,
+                                              color: t.primary,
+                                              icon: Icon(
+                                                playerVm.isPlaying
+                                                    ? t.pauseCircleIcon
+                                                    : t.playCircleIcon,
+                                              ),
+                                              onPressed: () =>
+                                                  playerVm.togglePlay(),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          iconSize: 40,
+                                          color: t.onPrimary,
+                                          icon: const Icon(t.skipIcon),
+                                          onPressed: () => playerVm.next(),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          iconSize: 24,
+                                          color: t.onPrimaryMuted,
+                                          icon: switch (playerVm.repeatMode) {
+                                            .none => Icon(
+                                              t.repeatIcon,
+                                              color: t.onPrimaryMuted,
+                                            ),
+                                            .all => Icon(
+                                              t.repeatIcon,
+                                              color: t.primary,
+                                            ),
+                                            .one => Icon(
+                                              t.repeatOneIcon,
+                                              color: t.primary,
+                                            ),
+                                          },
+                                          onPressed: () =>
+                                              playerVm.toggleRepeat(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  if (Platform.isLinux ||
+                                      Platform.isWindows ||
+                                      Platform.isMacOS)
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 220,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              playerVm.volume == 0 ||
+                                                      playerVm.isMuted
+                                                  ? t.volumeOffIcon
+                                                  : playerVm.volume < 50
+                                                  ? t.volumeDownIcon
+                                                  : t.volumeUpIcon,
+                                            ),
+                                            iconSize: 20,
+                                            visualDensity: .compact,
+                                            color: t.onPrimaryMuted,
+                                            onPressed: () => context
+                                                .read<PlayerViewmodel>()
+                                                .toggleMute(),
+                                          ),
+                                          Expanded(
+                                            child: Slider(
+                                              padding: const .symmetric(
+                                                horizontal: 4,
+                                              ),
+                                              value: playerVm.isMuted
+                                                  ? 0.0
+                                                  : playerVm.volume,
+                                              max: 100,
+                                              activeColor: t.onPrimaryMuted,
+                                              onChanged: (double value) =>
+                                                  context
+                                                      .read<PlayerViewmodel>()
+                                                      .setVolume(value),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  const Spacer(),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'package:phony/databases/database.dart';
 import 'package:phony/models/song_file.dart';
 import 'package:phony/repositories/song_file_repository.dart';
 
-class DriftSongFileRepository implements SongFileRepository{
+class DriftSongFileRepository implements SongFileRepository {
   final AppDatabase _db;
 
   DriftSongFileRepository(this._db);
@@ -16,23 +16,29 @@ class DriftSongFileRepository implements SongFileRepository{
 
   @override
   Stream<List<SongFile>> watchAll() =>
-      _db.watchAllSongFiles()
-      .map((rows) => rows.map(_toModel).toList());
+      _db.watchAllSongFiles().map((rows) => rows.map(_toModel).toList());
 
   @override
-  Future<void> insert(SongFile songFile) =>
-    _db.insertSongFile(
-      SongFilesCompanion(
-        name: Value(songFile.name),
-        path: Value(songFile.path),
-        artist: Value(songFile.artist),
-        duration: Value(songFile.duration),
-        checksum: Value(songFile.checksum),
-      ),
-    );
+  Future<void> insert(SongFile songFile) => _db.insertSongFile(
+    SongFilesCompanion(
+      name: Value(songFile.name),
+      path: Value(songFile.path),
+      artist: Value(songFile.artist),
+      duration: Value(songFile.duration),
+      checksum: Value(songFile.checksum),
+    ),
+  );
 
   @override
   Future<void> delete(int id) => _db.deleteSongFile(id);
+
+  @override
+  Future<List<SongFile>> getAll() =>
+      _db.getAllSongFiles().then((result) => result.map(_toModel).toList());
+
+  @override
+  Future<void> updatePath(int id, String path, String name) =>
+      _db.updateSongFilePath(id, path, name);
 
   SongFile _toModel(SongFilesData row) => SongFile(
     id: row.id,
@@ -41,5 +47,7 @@ class DriftSongFileRepository implements SongFileRepository{
     artist: row.artist,
     duration: row.duration,
     checksum: row.checksum,
+    size: row.size,
+    lastModified: row.lastModified,
   );
 }

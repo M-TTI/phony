@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:phony/models/song.dart';
 import 'package:phony/themes/theme.dart' as t;
+import 'package:phony/viewmodels/player_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key, required this.openCommand});
@@ -8,7 +11,11 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: final vm = context.watch<PlayerViewModel>();
+    final playerVm = context.read<PlayerViewmodel>();
+    final watchedPlayerVm = context.watch<PlayerViewmodel>();
+    final Song? song = watchedPlayerVm.currentSong;
+    if (song == null) return const SizedBox.shrink();
+
     return GestureDetector(
       onTap: openCommand,
       child: Container(
@@ -17,7 +24,11 @@ class MiniPlayer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             LinearProgressIndicator(
-              value: 0.4, // TODO: vm.position,
+              value: watchedPlayerVm.duration.inMilliseconds == 0
+                  ? 0.0
+                  : (watchedPlayerVm.position.inMilliseconds /
+                            watchedPlayerVm.duration.inMilliseconds)
+                        .clamp(0.0, 1.0),
               minHeight: 3,
               backgroundColor: t.background,
               valueColor: AlwaysStoppedAnimation<Color>(t.primary),
@@ -26,15 +37,18 @@ class MiniPlayer extends StatelessWidget {
             Row(
               children: [
                 SizedBox(width: 16),
-                Expanded(child: Text('Current song playing')),
+                Expanded(child: Text(song.title, overflow: .ellipsis)),
                 IconButton(
-                  // TODO: Implement Play Button
-                  onPressed: () => {},
-                  icon: Icon(Icons.play_arrow_rounded, color: t.onPrimary),
+                  onPressed: () => playerVm.togglePlay(),
+                  icon: Icon(
+                    watchedPlayerVm.isPlaying ? t.pauseIcon : t.playIcon,
+                    color: t.onPrimary,
+                  ),
                 ),
                 SizedBox(width: 8),
               ],
             ),
+            Padding(padding: .only(bottom: 4)),
           ],
         ),
       ),

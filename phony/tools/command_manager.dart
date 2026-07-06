@@ -69,12 +69,12 @@ void _seedDatabase(String dbPath) {
   } else {
     Database db = sqlite3.open(dbPath);
     final sqlFiles =
-        'INSERT INTO song_files VALUES'
-        '(1, "/home/mtti/Music/phony.mp3", "Phony", "Kafu", 190, ""),'
-        '(2, "/home/mtti/Music/Lagtrain.mp3", "Lagtrain", "Will Stetson, Inabakumori", 253, ""),'
-        '(3, "/home/mtti/Music/Niramenkko.ogg", "Niramenkko", "", 158, ""),'
-        '(4, "/home/mtti/Music/\'The Pretender\'.mp3", "The Pretender", "Infected Mushrooms", 394, ""),'
-        '(5, "/home/mtti/Music/\'Yomi Yori.ogg\'.mp3", "yomi yori", "Imperial Circus Dead Decadence", 498, "");';
+        'INSERT INTO song_files (id, path, name, artist, duration, checksum, size, last_modified) VALUES'
+        '(1, "/home/mtti/Music/phony.mp3", "Phony", "Kafu", 190, "", 3040000, 1751500800),'
+        '(2, "/home/mtti/Music/Lagtrain.mp3", "Lagtrain", "Will Stetson, Inabakumori", 253, "", 4048000, 1751500800),'
+        '(3, "/home/mtti/Music/Niramenkko.ogg", "Niramenkko", "", 158, "", 2528000, 1751500800),'
+        '(4, "/home/mtti/Music/\'The Pretender\'.mp3", "The Pretender", "Infected Mushrooms", 394, "", 6304000, 1751500800),'
+        '(5, "/home/mtti/Music/\'Yomi Yori.ogg\'.mp3", "yomi yori", "Imperial Circus Dead Decadence", 498, "", 7968000, 1751500800);';
 
     final sqlSongs =
         'INSERT INTO songs (title, artist, song_file_id, duration, has_meta_data) VALUES'
@@ -84,10 +84,23 @@ void _seedDatabase(String dbPath) {
         '("The Pretender", "Infected Mushrooms", "4", 394, false),'
         '("Yomi Yori", "Imperial Circus Dead Decadence", "5", 498, false);';
 
+    final sqlPlaylists =
+        'INSERT INTO playlists (name) VALUES'
+        '("Favorites"),'
+        '("osu! classics"),'
+        '("Empty playlist");';
+
+    final sqlEntries =
+        'INSERT INTO playlist_entries (playlist_id, song_id, position) VALUES'
+        '(1, 1, 0), (1, 3, 1), (1, 5, 2),'
+        '(2, 1, 0), (2, 2, 1), (2, 3, 2), (2, 4, 3), (2, 5, 4);';
+
     try {
       stdout.writeln('Inserting songs');
       db.execute(sqlFiles);
       db.execute(sqlSongs);
+      db.execute(sqlPlaylists);
+      db.execute(sqlEntries);
     } catch (e) {
       stdout.writeln('Could not seed the database: $e');
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phony/models/queue_source.dart';
 import 'package:phony/viewmodels/song_viewmodel.dart';
-import 'package:phony/views/components/song_card.dart';
+import 'package:phony/views/components/song_tile.dart';
 import 'package:provider/provider.dart';
 
 class SongsView extends StatelessWidget {
@@ -16,7 +17,12 @@ class SongsView extends StatelessWidget {
 
     return ListView.builder(
       itemCount: songs.length,
-      itemBuilder: (context, index) => SongCard(song: songs[index]),
+      itemBuilder: (context, index) => SongTile(
+        song: songs[index],
+        queue: songs,
+        index: index,
+        source: const LibraryQueueSource(),
+      ),
     );
   }
 }

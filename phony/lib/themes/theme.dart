@@ -18,11 +18,30 @@ const inkHovered = Color(0x0DFFFFFF);
 const inkPressed = Color(0x19FFFFFF);
 
 // Icons
-const menuIcon = Icons.menu;
-const moreIcon = Icons.more_vert;
+const menuIcon = Icons.menu_rounded;
+const moreIcon = Icons.more_vert_rounded;
+const checkIcon = Icons.check_rounded;
+const addIcon = Icons.add_rounded;
+const editIcon = Icons.edit_rounded;
+const trashIcon = Icons.delete_rounded;
+const playIcon = Icons.play_arrow_rounded;
+const pauseIcon = Icons.pause_rounded;
+const downloadIcon = Icons.download_rounded;
+const settingsIcon = Icons.settings_rounded;
+const scanIcon = Icons.radar_rounded;
+const playCircleIcon = Icons.play_circle_fill_rounded;
+const pauseCircleIcon = Icons.pause_circle_filled_rounded;
+const repeatIcon = Icons.repeat_rounded;
+const repeatOneIcon = Icons.repeat_one_rounded;
+const shuffleIcon = Icons.shuffle_rounded;
+const skipIcon = Icons.skip_next_rounded;
+const previousIcon = Icons.skip_previous_rounded;
+const arrowDownIcon = Icons.keyboard_arrow_down_rounded;
+const volumeUpIcon = Icons.volume_up_rounded;
+const volumeDownIcon = Icons.volume_down_rounded;
+const volumeOffIcon = Icons.volume_off_rounded;
 
 // Buttons
-
 final ButtonStyle _filledButtonStyle = ButtonStyle(
   backgroundColor: WidgetStateProperty.resolveWith((states) {
     if (states.contains(WidgetState.pressed)) return primaryPressed;
@@ -57,5 +76,30 @@ ThemeData buildTheme() {
       onSecondary: onPrimary,
     ),
     filledButtonTheme: FilledButtonThemeData(style: _filledButtonStyle),
+    tabBarTheme: const TabBarThemeData(
+      labelColor: onPrimary,
+      unselectedLabelColor: onPrimaryMuted,
+      indicatorColor: onPrimary,
+      dividerColor: Colors.transparent,
+    ),
+    menuTheme: MenuThemeData(
+      style: MenuStyle(backgroundColor: WidgetStatePropertyAll(backgroundDark)),
+    ),
+    menuButtonTheme: MenuButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: const WidgetStatePropertyAll(onPrimary),
+        overlayColor: WidgetStateColor.resolveWith((states) {
+          if (states.contains(WidgetState.hovered)) return inkHovered;
+          if (states.contains(WidgetState.pressed)) return inkPressed;
+          return Colors.transparent;
+        }),
+      ),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: primary,
+      foregroundColor: onPrimary,
+      hoverColor: primaryHovered,
+      splashColor: primaryPressed,
+    ),
   );
 }
