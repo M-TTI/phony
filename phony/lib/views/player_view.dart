@@ -27,6 +27,8 @@ class PlayerView extends StatefulWidget {
 
 class _PlayerViewState extends State<PlayerView> {
   double? _dragValue;
+  double? _hoverValue;
+  double? _hoverDx;
 
   String _formatDuration(double seconds) {
     final int total = seconds.round();
@@ -165,22 +167,118 @@ class _PlayerViewState extends State<PlayerView> {
                                         ),
                                       ),
                                       Expanded(
-                                        child: Slider(
-                                          value: sliderValue,
-                                          max: sliderMax,
-                                          activeColor: t.primary,
-                                          onChanged: (double value) => setState(
-                                            () => _dragValue = value,
-                                          ),
-                                          onChangeEnd: (double value) {
-                                            context
-                                                .read<PlayerViewmodel>()
-                                                .seek(
-                                                  Duration(
-                                                    seconds: value.round(),
+                                        child: Builder(
+                                          builder: (sliderContext) {
+                                            return Stack(
+                                              clipBehavior: .none,
+                                              children: [
+                                                MouseRegion(
+                                                  onHover: (event) {
+                                                    final Size? size =
+                                                        sliderContext.size;
+                                                    if (size == null) return;
+                                                    const double inset = 24.0;
+                                                    final double fraction =
+                                                        ((event.localPosition.dx -
+                                                                    inset) /
+                                                                (size.width -
+                                                                    2 * inset))
+                                                            .clamp(0.0, 1.0);
+                                                    setState(() {
+                                                      _hoverValue =
+                                                          fraction * sliderMax;
+                                                      _hoverDx = event
+                                                          .localPosition
+                                                          .dx
+                                                          .clamp(
+                                                            inset,
+                                                            size.width - inset,
+                                                          );
+                                                    });
+                                                  },
+                                                  onExit: (event) => setState(
+                                                    () => _hoverValue = null,
                                                   ),
-                                                );
-                                            setState(() => _dragValue = null);
+                                                  child: Slider(
+                                                    value: sliderValue,
+                                                    max: sliderMax,
+                                                    activeColor: t.primary,
+                                                    onChanged: (double value) =>
+                                                        setState(
+                                                          () => _dragValue =
+                                                              value,
+                                                        ),
+                                                    onChangeEnd:
+                                                        (double value) {
+                                                          context
+                                                              .read<
+                                                                PlayerViewmodel
+                                                              >()
+                                                              .seek(
+                                                                Duration(
+                                                                  seconds: value
+                                                                      .round(),
+                                                                ),
+                                                              );
+                                                          setState(
+                                                            () => _dragValue =
+                                                                null,
+                                                          );
+                                                        },
+                                                    secondaryTrackValue:
+                                                        _dragValue == null
+                                                        ? _hoverValue?.clamp(
+                                                            0.0,
+                                                            sliderMax,
+                                                          )
+                                                        : null,
+                                                    secondaryActiveColor:
+                                                        t.backgroundMuted,
+                                                  ),
+                                                ),
+                                                if (_hoverValue != null &&
+                                                    _hoverDx != null &&
+                                                    _dragValue == null)
+                                                  Positioned(
+                                                    left: _hoverDx,
+                                                    bottom: 36,
+                                                    child: FractionalTranslation(
+                                                      translation: const Offset(
+                                                        -0.5,
+                                                        0,
+                                                      ),
+                                                      child: IgnorePointer(
+                                                        child: Container(
+                                                          padding:
+                                                              const .symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 4,
+                                                              ),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                                color: t
+                                                                    .background,
+                                                                borderRadius:
+                                                                    .circular(
+                                                                      4,
+                                                                    ),
+                                                              ),
+                                                          child: Text(
+                                                            _formatDuration(
+                                                              _hoverValue!,
+                                                            ),
+                                                            style: const TextStyle(
+                                                              color: t
+                                                                  .onPrimaryMuted,
+                                                              fontSize: 12,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            );
                                           },
                                         ),
                                       ),

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Phony is a Flutter music player. Songs come primarily from scanning a music directory, with osu! beatmap import (`.osz` files) as a planned secondary source. School graduation project targeting Linux first, then Android/Windows.
+Phony is a Flutter music player. Songs come primarily from scanning a music directory, with osu! beatmap import (`.osz` files) as a secondary source. Started as a school graduation project (presented July 2026); now aiming for real releases — Play Store, RPM, AUR — targeting Linux first, then Android/Windows. Release quality (packaging, platform support, polish) is in scope.
 
 ## Commands
 
