@@ -13,12 +13,7 @@ class AudioPlayerService {
 
   Future<void> play(String path) => _player.open(Media(path));
 
-  // Future<void> pause() => _player.pause();
-
-  Future<void> pause() async {
-    print(_player.platform?.state.volume);
-    _player.pause();
-  }
+  Future<void> pause() => _player.pause();
 
   Future<void> resume() => _player.play();
 
