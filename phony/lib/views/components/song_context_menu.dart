@@ -59,11 +59,11 @@ class SongContextMenu extends StatelessWidget {
           ],
           child: const Text('Add to playlist'),
         ),
-        MenuItemButton(
-          leadingIcon: Icon(t.playIcon, size: 20),
-          onPressed: () => {},
-          child: const Text('Play next'),
-        ),
+        // MenuItemButton(
+        //   leadingIcon: Icon(t.playIcon, size: 20),
+        //   onPressed: () => {},
+        //   child: const Text('Play next'),
+        // ),
         MenuItemButton(
           leadingIcon: Icon(t.trashIcon, size: 20),
           onPressed: () => _confirmDelete(context),

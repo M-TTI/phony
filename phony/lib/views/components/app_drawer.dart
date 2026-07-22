@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:phony/services/library_scan_service.dart';
@@ -63,15 +65,38 @@ class AppDrawer extends StatelessWidget {
               );
               Navigator.pop(context);
 
-              final FilePickerResult? picked = await FilePicker.platform
-                  .pickFiles(
-                    allowMultiple: true,
-                    type: .custom,
-                    allowedExtensions: ['osz'],
-                    dialogTitle: 'Select .osz beatmaps',
-                  );
-              final List<String> paths = picked?.paths.nonNulls.toList() ?? [];
-              if (paths.isEmpty) return;
+              final List<String> paths;
+
+              if (Platform.isAndroid) {
+                final FilePickerResult? picked = await FilePicker.platform
+                    .pickFiles(
+                      allowMultiple: true,
+                      type: .any,
+                      dialogTitle: 'Select .osz beatmaps',
+                    );
+
+                paths = (picked?.paths.nonNulls ?? const <String>[])
+                    .where((p) => p.toLowerCase().endsWith('.osz'))
+                    .toList();
+              } else {
+                final FilePickerResult? picked = await FilePicker.platform
+                    .pickFiles(
+                      allowMultiple: true,
+                      type: .custom,
+                      allowedExtensions: ['osz'],
+                      dialogTitle: 'Select .osz beatmaps',
+                    );
+
+                paths = picked?.paths.nonNulls.toList() ?? [];
+              }
+
+              if (paths.isEmpty) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('None of the selected files were .osz'),
+                  ),
+                );
+              }
 
               final ImportResult? result = await songVm.importOsz(paths);
               if (result != null) {
