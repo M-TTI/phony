@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   audiotags
   media_kit_libs_windows_audio
+  permission_handler_windows
   sqlite3_flutter_libs
 )
 

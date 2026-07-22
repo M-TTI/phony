@@ -4,7 +4,6 @@ import 'package:phony/services/library_scan_service.dart';
 import 'package:phony/services/osz_import_service.dart';
 import 'package:phony/themes/theme.dart' as t;
 import 'package:phony/viewmodels/song_viewmodel.dart';
-import 'package:phony/views/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -86,16 +85,16 @@ class AppDrawer extends StatelessWidget {
               }
             },
           ),
-          ListTile(
-            leading: const Icon(t.settingsIcon, color: t.onPrimary),
-            title: const Text('Settings', style: TextStyle(color: t.onPrimary)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-              );
-            },
-          ),
+          // ListTile(
+          //   leading: const Icon(t.settingsIcon, color: t.onPrimary),
+          //   title: const Text('Settings', style: TextStyle(color: t.onPrimary)),
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     Navigator.of(context).push(
+          //       MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+          //     );
+          //   },
+          // ),
         ],
       ),
     );
