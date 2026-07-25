@@ -27,7 +27,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
         tabs: const [
           Tab(text: 'SONGS'),
           Tab(text: 'PLAYLISTS'),
-          Tab(text: 'FILES'),
+          // Tab(text: 'FILES'),
         ],
       ),
     );

@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:audiotags/audiotags.dart';
 import 'package:crypto/crypto.dart';
+import 'package:external_path/external_path.dart';
 import 'package:path/path.dart' as p;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:phony/models/song.dart';
 import 'package:phony/models/song_file.dart';
 import 'package:phony/repositories/song_file_repository.dart';
@@ -37,19 +39,31 @@ class LibraryScanService {
   };
 
   Future<String> _resolveMusicDirectory() async {
-    final String home = Platform.environment['HOME'] ?? '';
-
-    try {
-      final ProcessResult result = await Process.run('xdg-user-dir', ['MUSIC']);
-      final String path = (result.stdout as String).trim();
-      if (result.exitCode == 0 && path.isNotEmpty && path != home) {
-        return path;
-      }
-    } on ProcessException {
-      // fall through the default below.
+    if (Platform.isAndroid) {
+      return await ExternalPath.getExternalStoragePublicDirectory(
+        ExternalPath.DIRECTORY_MUSIC,
+      );
     }
 
-    return '$home/Music';
+    if (Platform.isLinux) {
+      final String home = Platform.environment['HOME'] ?? '';
+
+      try {
+        final ProcessResult result = await Process.run('xdg-user-dir', [
+          'MUSIC',
+        ]);
+        final String path = (result.stdout as String).trim();
+        if (result.exitCode == 0 && path.isNotEmpty && path != home) {
+          return path;
+        }
+      } on ProcessException {
+        // fall through the default below.
+      }
+
+      return '$home/Music';
+    }
+
+    return '';
   }
 
   Future<String> _checksum(File file) async =>
@@ -87,6 +101,14 @@ class LibraryScanService {
     int moved = 0;
     int skipped = 0;
     int failed = 0;
+
+    if (Platform.isAndroid) {
+      final status = await Permission.audio.request();
+
+      if (!status.isGranted) {
+        return const ScanResult(added: 0, moved: 0, skipped: 0, failed: 0);
+      }
+    }
 
     final Directory dir = Directory(await _resolveMusicDirectory());
     if (!await dir.exists()) {

@@ -1,10 +1,11 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:phony/services/library_scan_service.dart';
 import 'package:phony/services/osz_import_service.dart';
 import 'package:phony/themes/theme.dart' as t;
 import 'package:phony/viewmodels/song_viewmodel.dart';
-import 'package:phony/views/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -64,15 +65,38 @@ class AppDrawer extends StatelessWidget {
               );
               Navigator.pop(context);
 
-              final FilePickerResult? picked = await FilePicker.platform
-                  .pickFiles(
-                    allowMultiple: true,
-                    type: .custom,
-                    allowedExtensions: ['osz'],
-                    dialogTitle: 'Select .osz beatmaps',
-                  );
-              final List<String> paths = picked?.paths.nonNulls.toList() ?? [];
-              if (paths.isEmpty) return;
+              final List<String> paths;
+
+              if (Platform.isAndroid) {
+                final FilePickerResult? picked = await FilePicker.platform
+                    .pickFiles(
+                      allowMultiple: true,
+                      type: .any,
+                      dialogTitle: 'Select .osz beatmaps',
+                    );
+
+                paths = (picked?.paths.nonNulls ?? const <String>[])
+                    .where((p) => p.toLowerCase().endsWith('.osz'))
+                    .toList();
+              } else {
+                final FilePickerResult? picked = await FilePicker.platform
+                    .pickFiles(
+                      allowMultiple: true,
+                      type: .custom,
+                      allowedExtensions: ['osz'],
+                      dialogTitle: 'Select .osz beatmaps',
+                    );
+
+                paths = picked?.paths.nonNulls.toList() ?? [];
+              }
+
+              if (paths.isEmpty) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('None of the selected files were .osz'),
+                  ),
+                );
+              }
 
               final ImportResult? result = await songVm.importOsz(paths);
               if (result != null) {
@@ -86,16 +110,16 @@ class AppDrawer extends StatelessWidget {
               }
             },
           ),
-          ListTile(
-            leading: const Icon(t.settingsIcon, color: t.onPrimary),
-            title: const Text('Settings', style: TextStyle(color: t.onPrimary)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-              );
-            },
-          ),
+          // ListTile(
+          //   leading: const Icon(t.settingsIcon, color: t.onPrimary),
+          //   title: const Text('Settings', style: TextStyle(color: t.onPrimary)),
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     Navigator.of(context).push(
+          //       MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+          //     );
+          //   },
+          // ),
         ],
       ),
     );

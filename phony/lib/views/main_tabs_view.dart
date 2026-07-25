@@ -21,7 +21,7 @@ class MainTabsView extends StatefulWidget {
 class MainTabsViewState extends State<MainTabsView>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController = TabController(
-    length: 3,
+    length: 2,
     vsync: this,
   );
 
@@ -36,7 +36,7 @@ class MainTabsViewState extends State<MainTabsView>
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         backgroundColor: t.background,
         appBar: TopBar(title: widget.title, tabController: _tabController),
@@ -58,7 +58,7 @@ class MainTabsViewState extends State<MainTabsView>
           children: const [
             SongsView(),
             PlaylistsView(),
-            Center(child: Text('Coming soon!')),
+            // Center(child: Text('Coming soon!')),
           ],
         ),
       ),

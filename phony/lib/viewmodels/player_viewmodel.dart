@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:phony/models/enums/repeat_mode.dart';
@@ -72,7 +73,7 @@ class PlayerViewmodel extends ChangeNotifier {
   Duration duration = .zero;
   bool shuffleEnabled = false;
   RepeatMode repeatMode = .none;
-  double volume = 30;
+  double volume = 100;
   bool isMuted = false;
 
   StreamSubscription<Duration>? _positionSub;
@@ -281,7 +282,13 @@ class PlayerViewmodel extends ChangeNotifier {
     isMuted = state.isMuted;
     shuffleEnabled = state.shuffleEnabled;
     repeatMode = state.repeatMode;
-    await _audioPlayerService.setVolume(isMuted ? 0 : volume);
+    await _audioPlayerService.setVolume(
+      Platform.isAndroid
+          ? 100.0
+          : isMuted
+          ? 0
+          : volume,
+    );
 
     final List<Song> library = await _songRepository.watchAll().first;
     if (_queue.isNotEmpty) return;
