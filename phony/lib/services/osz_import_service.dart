@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
-import 'package:audiotags/audiotags.dart';
+import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -123,7 +123,10 @@ class OszImportService {
         await File(imagePath).writeAsBytes(bgEntry.content);
       }
 
-      final Tag? tag = await AudioTags.read(audioPath);
+      final AudioMetadata metadata = readMetadata(
+        File(audioPath),
+        getImage: false,
+      );
       final FileStat stat = await File(audioPath).stat();
       final String? artist = info.artist.isEmpty ? null : info.artist;
 
@@ -133,14 +136,14 @@ class OszImportService {
           title: info.title,
           artist: artist,
           hasMetaData: true,
-          duration: tag?.duration ?? 0,
+          duration: metadata.duration?.inSeconds ?? 0,
           imagePath: imagePath,
           file: SongFile(
             id: 0,
             path: audioPath,
             name: p.basename(audioPath),
             artist: artist,
-            duration: tag?.duration ?? 0,
+            duration: metadata.duration?.inSeconds ?? 0,
             checksum: checksum,
             size: stat.size,
             lastModified: stat.modified,

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:audiotags/audiotags.dart';
+import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:crypto/crypto.dart';
 import 'package:external_path/external_path.dart';
 import 'package:path/path.dart' as p;
@@ -70,24 +70,24 @@ class LibraryScanService {
       (await md5.bind(file.openRead()).first).toString();
 
   Future<void> _insertNewSong(File file, String checksum) async {
-    final Tag? tag = await AudioTags.read(file.path);
+    final AudioMetadata metadata = readMetadata(file, getImage: false);
     final FileStat stat = await file.stat();
     final String fallbackTitle = p.basenameWithoutExtension(file.path);
 
     await _songRepository.insertScanned(
       Song(
         id: 0,
-        title: tag?.title ?? fallbackTitle,
-        artist: tag?.trackArtist,
-        hasMetaData: tag?.title != null,
-        duration: tag?.duration ?? 0,
+        title: metadata.title ?? fallbackTitle,
+        artist: metadata.artist,
+        hasMetaData: metadata.title != null,
+        duration: metadata.duration?.inSeconds ?? 0,
         imagePath: null,
         file: SongFile(
           id: 0,
           path: file.path,
           name: p.basename(file.path),
-          artist: tag?.trackArtist,
-          duration: tag?.duration ?? 0,
+          artist: metadata.artist,
+          duration: metadata.duration?.inSeconds ?? 0,
           checksum: checksum,
           size: stat.size,
           lastModified: stat.modified,
