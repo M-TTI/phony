@@ -12,6 +12,7 @@ import 'package:phony/repositories/app_player_state_repository.dart';
 import 'package:phony/repositories/playlist_repository.dart';
 import 'package:phony/repositories/song_repository.dart';
 import 'package:phony/services/audio_player_service.dart';
+import 'package:phony/services/media_session_handler.dart';
 
 class PlayerViewmodel extends ChangeNotifier {
   PlayerViewmodel(
@@ -19,7 +20,16 @@ class PlayerViewmodel extends ChangeNotifier {
     this._songRepository,
     this._playlistRepository,
     this._stateRepository,
+    this._mediaSessionHandler,
   ) {
+    _mediaSessionHandler
+      ..onPlay = togglePlay
+      ..onPause = togglePlay
+      ..onNext = next
+      ..onPrevious = previous
+      ..onSeek = seek
+      ..onStop = _stopAndClear;
+
     DateTime lastPositionSave = DateTime.now();
 
     _positionSub = _audioPlayerService.position.listen((Duration p) {
@@ -43,6 +53,7 @@ class PlayerViewmodel extends ChangeNotifier {
     _playingSub = _audioPlayerService.playing.listen((bool p) {
       isPlaying = p;
       notifyListeners();
+      _syncMediaSession();
     });
 
     _completedSub = _audioPlayerService.completed
@@ -58,16 +69,14 @@ class PlayerViewmodel extends ChangeNotifier {
   final SongRepository _songRepository;
   final PlaylistRepository _playlistRepository;
   final AppPlayerStateRepository _stateRepository;
+  final MediaSessionHandler _mediaSessionHandler;
 
   List<Song> _queue = [];
   List<Song> _originalQueue = [];
   int _currentIndex = -1;
+  int? _lastPushedSongId;
+
   QueueSource? source;
-
-  Song? get currentSong => (_currentIndex >= 0 && _currentIndex < _queue.length)
-      ? _queue[_currentIndex]
-      : null;
-
   bool isPlaying = false;
   Duration position = .zero;
   Duration duration = .zero;
@@ -75,6 +84,10 @@ class PlayerViewmodel extends ChangeNotifier {
   RepeatMode repeatMode = .none;
   double volume = 100;
   bool isMuted = false;
+
+  Song? get currentSong => (_currentIndex >= 0 && _currentIndex < _queue.length)
+      ? _queue[_currentIndex]
+      : null;
 
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration>? _durationSub;
@@ -108,6 +121,7 @@ class PlayerViewmodel extends ChangeNotifier {
     if (shuffleEnabled) _shuffleKeepingCurrent();
     notifyListeners();
     await _audioPlayerService.play(currentSong!.file.path);
+    _syncMediaSession();
 
     unawaited(_saveState());
   }
@@ -121,7 +135,11 @@ class PlayerViewmodel extends ChangeNotifier {
     unawaited(_saveState());
   }
 
-  Future<void> seek(Duration target) => _audioPlayerService.seek(target);
+  Future<void> seek(Duration target) async {
+    await _audioPlayerService.seek(target);
+    position = target;
+    _syncMediaSession();
+  }
 
   Future<void> next() async {
     if (_queue.isEmpty) return;
@@ -135,6 +153,7 @@ class PlayerViewmodel extends ChangeNotifier {
 
     notifyListeners();
     await _audioPlayerService.play(currentSong!.file.path);
+    _syncMediaSession();
 
     unawaited(_saveState());
   }
@@ -149,6 +168,7 @@ class PlayerViewmodel extends ChangeNotifier {
     _currentIndex--;
     notifyListeners();
     await _audioPlayerService.play(currentSong!.file.path);
+    _syncMediaSession();
 
     unawaited(_saveState());
   }
@@ -157,6 +177,7 @@ class PlayerViewmodel extends ChangeNotifier {
     if (currentSong == null) return;
     if (repeatMode == .one) {
       await _audioPlayerService.play(currentSong!.file.path);
+      _syncMediaSession();
 
       return;
     }
@@ -213,10 +234,11 @@ class PlayerViewmodel extends ChangeNotifier {
       _currentIndex = _queue.indexWhere((Song s) => s.id == currentId);
     } else if (_currentIndex < _queue.length) {
       await _audioPlayerService.play(_queue[_currentIndex].file.path);
+      _syncMediaSession();
     } else {
-      _currentIndex = -1;
-      source = null;
-      await _audioPlayerService.stop();
+      await _mediaSessionHandler.stop();
+
+      return;
     }
     notifyListeners();
 
@@ -241,6 +263,19 @@ class PlayerViewmodel extends ChangeNotifier {
     notifyListeners();
 
     unawaited(_saveState());
+  }
+
+  Future<void> _stopAndClear() async {
+    await _audioPlayerService.stop();
+    _queue = [];
+    _originalQueue = [];
+    _currentIndex = -1;
+    source = null;
+    _lastPushedSongId = null;
+    isPlaying = false;
+    position = .zero;
+    notifyListeners();
+    await _saveState();
   }
 
   ///
@@ -345,6 +380,7 @@ class PlayerViewmodel extends ChangeNotifier {
       await _audioPlayerService.load(_queue[index].file.path);
       await ready;
       if (target > .zero) await _audioPlayerService.seek(target);
+      _syncMediaSession();
     } catch (_) {
       // engine couldn't prepare the file
     }
@@ -358,5 +394,29 @@ class PlayerViewmodel extends ChangeNotifier {
         .firstOrNull;
 
     return match == null ? null : PlaylistQueueSource(match);
+  }
+
+  ///
+  /// Player Background OS Interaction
+  ///
+  void _syncMediaSession() {
+    final Song? song = currentSong;
+    if (song == null) return;
+
+    if (song.id != _lastPushedSongId) {
+      _lastPushedSongId = song.id;
+      _mediaSessionHandler.setItem(
+        id: song.id.toString(),
+        title: song.title,
+        artist: song.artist,
+        artUri: song.imagePath != null ? Uri.file(song.imagePath!) : null,
+        duration: Duration(seconds: song.duration),
+      );
+    }
+
+    _mediaSessionHandler.setPlaybackState(
+      playing: isPlaying,
+      position: position,
+    );
   }
 }
