@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:phony/models/enums/repeat_mode.dart';
 
 class MediaSessionHandler extends BaseAudioHandler {
   Future<void> Function()? onPlay;
@@ -6,7 +7,10 @@ class MediaSessionHandler extends BaseAudioHandler {
   Future<void> Function()? onNext;
   Future<void> Function()? onPrevious;
   Future<void> Function()? onStop;
+  Future<void> Function()? onClose;
   Future<void> Function(Duration position)? onSeek;
+  Future<void> Function(AudioServiceShuffleMode mode)? onSetShuffle;
+  Future<void> Function(AudioServiceRepeatMode mode)? onSetRepeat;
 
   @override
   Future<void> play() async => onPlay?.call();
@@ -33,6 +37,28 @@ class MediaSessionHandler extends BaseAudioHandler {
   @override
   Future<void> seek(Duration position) async => onSeek?.call(position);
 
+  @override
+  Future<void> onTaskRemoved() async => _close();
+
+  @override
+  Future<void> onNotificationDeleted() async => _close();
+
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async =>
+      onSetShuffle?.call(shuffleMode);
+
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async =>
+      onSetRepeat?.call(repeatMode);
+
+  Future<void> _close() async {
+    await onClose?.call();
+    playbackState.add(
+      playbackState.value.copyWith(processingState: .idle, playing: false),
+    );
+    await super.stop();
+  }
+
   void setItem({
     required String id,
     required String title,
@@ -55,6 +81,8 @@ class MediaSessionHandler extends BaseAudioHandler {
     required bool playing,
     required Duration position,
     AudioProcessingState processingState = .ready,
+    required bool shuffleEnabled,
+    required RepeatMode repeatMode,
   }) {
     playbackState.add(
       playbackState.value.copyWith(
@@ -62,13 +90,18 @@ class MediaSessionHandler extends BaseAudioHandler {
           MediaControl.skipToPrevious,
           playing ? MediaControl.pause : MediaControl.play,
           MediaControl.skipToNext,
-          MediaControl.stop,
         ],
-        systemActions: const {.seek},
+        systemActions: const {.seek, .setShuffleMode, .setRepeatMode},
         androidCompactActionIndices: const [0, 1, 2],
         processingState: processingState,
         playing: playing,
         updatePosition: position,
+        shuffleMode: shuffleEnabled ? .all : .none,
+        repeatMode: switch (repeatMode) {
+          .none => .none,
+          .one => .one,
+          .all => .all,
+        },
       ),
     );
   }

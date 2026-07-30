@@ -34,7 +34,6 @@ class LibraryScanService {
     '.mp3',
     '.flac',
     '.ogg',
-    '.m4a',
     '.wav',
   };
 

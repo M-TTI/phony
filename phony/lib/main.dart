@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:phony/databases/database.dart';
@@ -31,6 +32,8 @@ void main() async {
       androidStopForegroundOnPause: true,
     ),
   );
+  final audioSession = await AudioSession.instance;
+  await audioSession.configure(const AudioSessionConfiguration.music());
 
   final db = AppDatabase();
   final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -68,6 +71,7 @@ void main() async {
             playlistRepository,
             appPlayStateRepository,
             mediaSessionHandler,
+            audioSession,
           ),
         ),
       ],
