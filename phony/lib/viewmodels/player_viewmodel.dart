@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:phony/models/enums/repeat_mode.dart';
 import 'package:phony/models/enums/source_type.dart';
@@ -12,6 +14,7 @@ import 'package:phony/repositories/app_player_state_repository.dart';
 import 'package:phony/repositories/playlist_repository.dart';
 import 'package:phony/repositories/song_repository.dart';
 import 'package:phony/services/audio_player_service.dart';
+import 'package:phony/services/media_session_handler.dart';
 
 class PlayerViewmodel extends ChangeNotifier {
   PlayerViewmodel(
@@ -19,7 +22,26 @@ class PlayerViewmodel extends ChangeNotifier {
     this._songRepository,
     this._playlistRepository,
     this._stateRepository,
+    this._mediaSessionHandler,
+    this._audioSession,
   ) {
+    _mediaSessionHandler
+      ..onPlay = togglePlay
+      ..onPause = togglePlay
+      ..onNext = next
+      ..onPrevious = previous
+      ..onSeek = seek
+      ..onStop = _stopAndClear
+      ..onClose = _closeSession
+      ..onSetShuffle = ((AudioServiceShuffleMode mode) =>
+          setShuffle(mode != .none))
+      ..onSetRepeat = ((AudioServiceRepeatMode mode) =>
+          setRepeat(switch (mode) {
+            AudioServiceRepeatMode.none => .none,
+            AudioServiceRepeatMode.one => .one,
+            AudioServiceRepeatMode.all || AudioServiceRepeatMode.group => .all,
+          }));
+
     DateTime lastPositionSave = DateTime.now();
 
     _positionSub = _audioPlayerService.position.listen((Duration p) {
@@ -43,6 +65,7 @@ class PlayerViewmodel extends ChangeNotifier {
     _playingSub = _audioPlayerService.playing.listen((bool p) {
       isPlaying = p;
       notifyListeners();
+      _syncMediaSession();
     });
 
     _completedSub = _audioPlayerService.completed
@@ -51,6 +74,13 @@ class PlayerViewmodel extends ChangeNotifier {
 
     _songsSub = _songRepository.watchAll().listen(_onLibraryChanged);
 
+    _interruptionSub = _audioSession.interruptionEventStream.listen(
+      _onInterruption,
+    );
+    _noisySub = _audioSession.becomingNoisyEventStream.listen(
+      (_) => _handleBecomingNoisy(),
+    );
+
     unawaited(_restoreState());
   }
 
@@ -58,16 +88,15 @@ class PlayerViewmodel extends ChangeNotifier {
   final SongRepository _songRepository;
   final PlaylistRepository _playlistRepository;
   final AppPlayerStateRepository _stateRepository;
+  final MediaSessionHandler _mediaSessionHandler;
+  final AudioSession _audioSession;
 
   List<Song> _queue = [];
   List<Song> _originalQueue = [];
   int _currentIndex = -1;
+  int? _lastPushedSongId;
+
   QueueSource? source;
-
-  Song? get currentSong => (_currentIndex >= 0 && _currentIndex < _queue.length)
-      ? _queue[_currentIndex]
-      : null;
-
   bool isPlaying = false;
   Duration position = .zero;
   Duration duration = .zero;
@@ -75,12 +104,19 @@ class PlayerViewmodel extends ChangeNotifier {
   RepeatMode repeatMode = .none;
   double volume = 100;
   bool isMuted = false;
+  bool _resumeAfterInterruption = false;
+
+  Song? get currentSong => (_currentIndex >= 0 && _currentIndex < _queue.length)
+      ? _queue[_currentIndex]
+      : null;
 
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration>? _durationSub;
   StreamSubscription<bool>? _playingSub;
   StreamSubscription<bool>? _completedSub;
   StreamSubscription<List<Song>>? _songsSub;
+  StreamSubscription<AudioInterruptionEvent>? _interruptionSub;
+  StreamSubscription<void>? _noisySub;
 
   @override
   void dispose() {
@@ -89,6 +125,8 @@ class PlayerViewmodel extends ChangeNotifier {
     _playingSub?.cancel();
     _completedSub?.cancel();
     _songsSub?.cancel();
+    _interruptionSub?.cancel();
+    _noisySub?.cancel();
     super.dispose();
   }
 
@@ -100,6 +138,8 @@ class PlayerViewmodel extends ChangeNotifier {
     int startIndex,
     QueueSource queueSource,
   ) async {
+    await _audioSession.setActive(true);
+
     if (songs.isEmpty) return;
     _originalQueue = List.of(songs);
     _queue = List.of(songs);
@@ -108,20 +148,28 @@ class PlayerViewmodel extends ChangeNotifier {
     if (shuffleEnabled) _shuffleKeepingCurrent();
     notifyListeners();
     await _audioPlayerService.play(currentSong!.file.path);
+    _syncMediaSession();
 
     unawaited(_saveState());
   }
 
   Future<void> togglePlay() async {
     if (currentSong == null) return;
-    isPlaying
-        ? await _audioPlayerService.pause()
-        : await _audioPlayerService.resume();
+    if (isPlaying) {
+      await _audioPlayerService.pause();
+    } else {
+      await _audioSession.setActive(true);
+      await _audioPlayerService.resume();
+    }
 
     unawaited(_saveState());
   }
 
-  Future<void> seek(Duration target) => _audioPlayerService.seek(target);
+  Future<void> seek(Duration target) async {
+    await _audioPlayerService.seek(target);
+    position = target;
+    _syncMediaSession();
+  }
 
   Future<void> next() async {
     if (_queue.isEmpty) return;
@@ -135,6 +183,7 @@ class PlayerViewmodel extends ChangeNotifier {
 
     notifyListeners();
     await _audioPlayerService.play(currentSong!.file.path);
+    _syncMediaSession();
 
     unawaited(_saveState());
   }
@@ -149,6 +198,7 @@ class PlayerViewmodel extends ChangeNotifier {
     _currentIndex--;
     notifyListeners();
     await _audioPlayerService.play(currentSong!.file.path);
+    _syncMediaSession();
 
     unawaited(_saveState());
   }
@@ -157,6 +207,7 @@ class PlayerViewmodel extends ChangeNotifier {
     if (currentSong == null) return;
     if (repeatMode == .one) {
       await _audioPlayerService.play(currentSong!.file.path);
+      _syncMediaSession();
 
       return;
     }
@@ -164,14 +215,17 @@ class PlayerViewmodel extends ChangeNotifier {
     await next();
   }
 
-  void toggleRepeat() {
-    repeatMode = switch (repeatMode) {
-      .none => .all,
-      .all => .one,
-      .one => .none,
-    };
-    notifyListeners();
+  void toggleRepeat() => setRepeat(switch (repeatMode) {
+    .none => .all,
+    .all => .one,
+    .one => .none,
+  });
 
+  Future<void> setRepeat(RepeatMode mode) async {
+    if (repeatMode == mode) return;
+    repeatMode = mode;
+    notifyListeners();
+    _syncMediaSession();
     unawaited(_saveState());
   }
 
@@ -189,8 +243,13 @@ class PlayerViewmodel extends ChangeNotifier {
       _currentIndex = _queue.indexWhere((Song s) => s.id == id);
     }
     notifyListeners();
-
+    _syncMediaSession();
     unawaited(_saveState());
+  }
+
+  Future<void> setShuffle(bool enabled) async {
+    if (shuffleEnabled == enabled) return;
+    await toggleShuffle();
   }
 
   void _shuffleKeepingCurrent() {
@@ -213,10 +272,11 @@ class PlayerViewmodel extends ChangeNotifier {
       _currentIndex = _queue.indexWhere((Song s) => s.id == currentId);
     } else if (_currentIndex < _queue.length) {
       await _audioPlayerService.play(_queue[_currentIndex].file.path);
+      _syncMediaSession();
     } else {
-      _currentIndex = -1;
-      source = null;
-      await _audioPlayerService.stop();
+      await _mediaSessionHandler.stop();
+
+      return;
     }
     notifyListeners();
 
@@ -241,6 +301,19 @@ class PlayerViewmodel extends ChangeNotifier {
     notifyListeners();
 
     unawaited(_saveState());
+  }
+
+  Future<void> _stopAndClear() async {
+    await _audioPlayerService.stop();
+    _queue = [];
+    _originalQueue = [];
+    _currentIndex = -1;
+    source = null;
+    _lastPushedSongId = null;
+    isPlaying = false;
+    position = .zero;
+    notifyListeners();
+    await _saveState();
   }
 
   ///
@@ -345,6 +418,7 @@ class PlayerViewmodel extends ChangeNotifier {
       await _audioPlayerService.load(_queue[index].file.path);
       await ready;
       if (target > .zero) await _audioPlayerService.seek(target);
+      _syncMediaSession();
     } catch (_) {
       // engine couldn't prepare the file
     }
@@ -358,5 +432,59 @@ class PlayerViewmodel extends ChangeNotifier {
         .firstOrNull;
 
     return match == null ? null : PlaylistQueueSource(match);
+  }
+
+  ///
+  /// Background Playback
+  ///
+  void _syncMediaSession() {
+    final Song? song = currentSong;
+    if (song == null) return;
+
+    if (song.id != _lastPushedSongId) {
+      _lastPushedSongId = song.id;
+      _mediaSessionHandler.setItem(
+        id: song.id.toString(),
+        title: song.title,
+        artist: song.artist,
+        artUri: song.imagePath != null ? Uri.file(song.imagePath!) : null,
+        duration: Duration(seconds: song.duration),
+      );
+    }
+
+    _mediaSessionHandler.setPlaybackState(
+      playing: isPlaying,
+      position: position,
+      shuffleEnabled: shuffleEnabled,
+      repeatMode: repeatMode,
+    );
+  }
+
+  Future<void> _onInterruption(AudioInterruptionEvent event) async {
+    if (event.begin) {
+      _resumeAfterInterruption = isPlaying && event.type != .duck;
+      if (event.type == .duck) {
+        await _audioPlayerService.setVolume(isMuted ? 0 : volume * 0.3);
+      } else if (isPlaying) {
+        await _audioPlayerService.pause();
+      }
+    } else {
+      if (event.type == .duck) {
+        await _audioPlayerService.setVolume(isMuted ? 0 : volume);
+      } else if (_resumeAfterInterruption) {
+        _resumeAfterInterruption = false;
+        await _audioPlayerService.resume();
+      }
+    }
+  }
+
+  Future<void> _handleBecomingNoisy() async {
+    if (isPlaying) await _audioPlayerService.pause();
+  }
+
+  Future<void> _closeSession() async {
+    await _saveState();
+    await _audioPlayerService.stop();
+    await _audioSession.setActive(false);
   }
 }
