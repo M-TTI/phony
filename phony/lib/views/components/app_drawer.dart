@@ -68,24 +68,22 @@ class AppDrawer extends StatelessWidget {
               final List<String> paths;
 
               if (Platform.isAndroid) {
-                final FilePickerResult? picked = await FilePicker.platform
-                    .pickFiles(
-                      allowMultiple: true,
-                      type: .any,
-                      dialogTitle: 'Select .osz beatmaps',
-                    );
+                final FilePickerResult? picked = await FilePicker.pickFiles(
+                  allowMultiple: true,
+                  type: .any,
+                  dialogTitle: 'Select .osz beatmaps',
+                );
 
                 paths = (picked?.paths.nonNulls ?? const <String>[])
                     .where((p) => p.toLowerCase().endsWith('.osz'))
                     .toList();
               } else {
-                final FilePickerResult? picked = await FilePicker.platform
-                    .pickFiles(
-                      allowMultiple: true,
-                      type: .custom,
-                      allowedExtensions: ['osz'],
-                      dialogTitle: 'Select .osz beatmaps',
-                    );
+                final FilePickerResult? picked = await FilePicker.pickFiles(
+                  allowMultiple: true,
+                  type: .custom,
+                  allowedExtensions: ['osz'],
+                  dialogTitle: 'Select .osz beatmaps',
+                );
 
                 paths = picked?.paths.nonNulls.toList() ?? [];
               }
