@@ -132,7 +132,7 @@ void _findAllSongs(String dbPath) {
       stdout.writeln('${title.padRight(30)} | $duration');
     }
 
-    db.dispose();
+    db.close();
   }
 }
 
