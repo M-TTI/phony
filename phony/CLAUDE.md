@@ -91,7 +91,7 @@ Views should contain no business logic. ViewModels hold state and call repositor
 - **Checksum = identity, path = location.** MD5 streamed via `md5.bind(file.openRead()).first`.
 - Music dir resolved via `xdg-user-dir MUSIC`, falling back to `$HOME/Music` (also when xdg returns bare `$HOME`).
 - Three-phase reconciliation: (1) path match against known `SongFiles` → skip without hashing; (2) hash unknown paths — checksum match on an unseen record = move/rename (update path), match on a seen record or an already-inserted checksum = duplicate skip, no match = insert `SongFiles`+`Songs` in one transaction; (3) additive-only in v1 — missing files are NOT removed.
-- Tags read via `audiotags`; untagged files fall back to the filename as title (`hasMetaData` false). `Tag.duration` is int seconds from audio properties (mp3 values are estimates, can be off by ~1s vs the engine).
+- Tags read via `audio_metadata_reader` (`readMetadata(file, getImage: false)`) — replaced `audiotags`, which failed to build on Windows. Untagged files fall back to the filename as title (`hasMetaData` false). `AudioMetadata.duration` is a `Duration` from audio properties (mp3 values are estimates, can be off by ~1s vs the engine); `getImage: true` additionally exposes `metadata.pictures` (`List<Picture>`: `bytes`, `mimetype`, `pictureType`) for embedded cover art.
 
 ### Playback
 - **media_kit as a single-track engine** behind `AudioPlayerService` — only this file imports media_kit. Verbs: `play(path)` (open + autoplay), `load(path)` (open paused, for restore), pause/resume/seek/stop/setVolume (0–100 scale, not 0.0–1.0), plus position/duration/playing/completed streams (`completed` emits false too — filter `.where((done) => done)`).
