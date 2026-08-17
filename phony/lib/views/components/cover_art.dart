@@ -20,12 +20,16 @@ class CoverArt extends StatelessWidget {
 
     if (imagePath == null) return placeholder;
 
+    final int cachedHeight = (size * MediaQuery.devicePixelRatioOf(context))
+        .ceil();
+
     return ClipRRect(
       borderRadius: radius,
       child: Image.file(
         File(imagePath!),
         width: size,
         height: size,
+        cacheHeight: cachedHeight,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => placeholder,
       ),
