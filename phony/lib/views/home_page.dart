@@ -69,7 +69,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      clipBehavior: Clip.hardEdge,
       children: [
         Scaffold(
           backgroundColor: t.background,
@@ -98,9 +97,8 @@ class _HomePageState extends State<HomePage> {
             controller: _playerSheetController,
             initialChildSize: 0.0,
             minChildSize: 0.0,
-            maxChildSize: 1.0,
             snap: true,
-            snapSizes: [0.0, 1.0],
+            snapSizes: const [0.0, 1.0],
             builder: (context, scrollController) => PlayerView(
               scrollController: scrollController,
               closeCommand: closePlayerView,

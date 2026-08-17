@@ -23,12 +23,12 @@ class PlaylistContextMenu extends StatelessWidget {
       ),
       menuChildren: [
         MenuItemButton(
-          leadingIcon: Icon(t.editIcon, size: 20),
+          leadingIcon: const Icon(t.editIcon, size: 20),
           onPressed: () => _rename(context),
           child: const Text('Rename'),
         ),
         MenuItemButton(
-          leadingIcon: Icon(t.trashIcon, size: 20),
+          leadingIcon: const Icon(t.trashIcon, size: 20),
           onPressed: () => _confirmDelete(context),
           child: const Text('Delete'),
         ),

@@ -48,18 +48,18 @@ final ButtonStyle _filledButtonStyle = ButtonStyle(
     if (states.contains(WidgetState.hovered)) return primaryHovered;
     return primary;
   }),
-  foregroundColor: WidgetStatePropertyAll(onPrimary),
-  shape: WidgetStatePropertyAll(const ContinuousRectangleBorder()),
-  padding: WidgetStatePropertyAll(
-    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+  foregroundColor: const WidgetStatePropertyAll(onPrimary),
+  shape: const WidgetStatePropertyAll(ContinuousRectangleBorder()),
+  padding: const WidgetStatePropertyAll(
+    EdgeInsets.symmetric(horizontal: 16, vertical: 4),
   ),
-  shadowColor: WidgetStatePropertyAll(shadow),
-  elevation: WidgetStatePropertyAll(4),
+  shadowColor: const WidgetStatePropertyAll(shadow),
+  elevation: const WidgetStatePropertyAll(4),
 );
 
 ThemeData buildTheme() {
   return ThemeData(
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme(
       brightness: Brightness.dark,
       primary: primary,
       onPrimary: onPrimary,
@@ -82,7 +82,7 @@ ThemeData buildTheme() {
       indicatorColor: onPrimary,
       dividerColor: Colors.transparent,
     ),
-    menuTheme: MenuThemeData(
+    menuTheme: const MenuThemeData(
       style: MenuStyle(backgroundColor: WidgetStatePropertyAll(backgroundDark)),
     ),
     menuButtonTheme: MenuButtonThemeData(
@@ -95,7 +95,7 @@ ThemeData buildTheme() {
         }),
       ),
     ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: primary,
       foregroundColor: onPrimary,
       hoverColor: primaryHovered,

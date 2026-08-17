@@ -125,7 +125,6 @@ class OszImportService {
 
       final AudioMetadata metadata = readMetadata(
         File(audioPath),
-        getImage: false,
       );
       final FileStat stat = await File(audioPath).stat();
       final String? artist = info.artist.isEmpty ? null : info.artist;

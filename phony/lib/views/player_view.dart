@@ -318,7 +318,7 @@ class _PlayerViewState extends State<PlayerView> {
                                         Stack(
                                           alignment: .center,
                                           children: [
-                                            Icon(
+                                            const Icon(
                                               Icons.circle,
                                               color: t.onPrimary,
                                               size: 60,
@@ -348,15 +348,15 @@ class _PlayerViewState extends State<PlayerView> {
                                           iconSize: 24,
                                           color: t.onPrimaryMuted,
                                           icon: switch (playerVm.repeatMode) {
-                                            .none => Icon(
+                                            .none => const Icon(
                                               t.repeatIcon,
                                               color: t.onPrimaryMuted,
                                             ),
-                                            .all => Icon(
+                                            .all => const Icon(
                                               t.repeatIcon,
                                               color: t.primary,
                                             ),
-                                            .one => Icon(
+                                            .one => const Icon(
                                               t.repeatOneIcon,
                                               color: t.primary,
                                             ),

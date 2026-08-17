@@ -1,4 +1,4 @@
-import 'playlist.dart';
+import 'package:phony/models/playlist.dart';
 
 sealed class QueueSource {
   const QueueSource();

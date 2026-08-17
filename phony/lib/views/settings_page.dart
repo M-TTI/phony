@@ -9,7 +9,7 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(color: t.onPrimary),
-        title: Text('Settings'),
+        title: const Text('Settings'),
         backgroundColor: t.primary,
         shadowColor: t.shadow,
         elevation: 8,

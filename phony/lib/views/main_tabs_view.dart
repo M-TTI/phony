@@ -7,7 +7,7 @@ import 'package:phony/views/playlists_view.dart';
 import 'package:phony/views/songs_view.dart';
 import 'package:provider/provider.dart';
 
-import 'components/top_bar.dart';
+import 'package:phony/views/components/top_bar.dart';
 
 class MainTabsView extends StatefulWidget {
   const MainTabsView({super.key, required this.title});
@@ -69,7 +69,7 @@ class MainTabsViewState extends State<MainTabsView>
     final String? name = await showDialog<String>(
       context: context,
       builder: (_) =>
-          PlaylistNameDialog(title: 'New playlist', confirmLabel: 'Create'),
+          const PlaylistNameDialog(title: 'New playlist', confirmLabel: 'Create'),
     );
 
     final String trimmed = name?.trim() ?? '';

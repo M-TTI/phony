@@ -25,11 +25,10 @@ void main() async {
   MediaKit.ensureInitialized();
   final mediaSessionHandler = await AudioService.init(
     builder: () => MediaSessionHandler(),
-    config: AudioServiceConfig(
+    config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.mtti.phony.playback',
       androidNotificationChannelName: 'Phony playback',
       androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
     ),
   );
   final audioSession = await AudioSession.instance;

@@ -31,11 +31,10 @@ class SongContextMenu extends StatelessWidget {
       ),
       menuChildren: [
         SubmenuButton(
-          leadingIcon: Icon(t.addIcon, size: 20),
+          leadingIcon: const Icon(t.addIcon, size: 20),
           menuChildren: [
             if (playlists.isEmpty)
               const MenuItemButton(
-                onPressed: null,
                 child: Text('No playlists'),
               ),
             for (final playlist in playlists)
@@ -65,7 +64,7 @@ class SongContextMenu extends StatelessWidget {
         //   child: const Text('Play next'),
         // ),
         MenuItemButton(
-          leadingIcon: Icon(t.trashIcon, size: 20),
+          leadingIcon: const Icon(t.trashIcon, size: 20),
           onPressed: () => _confirmDelete(context),
           child: const Text('Delete'),
         ),

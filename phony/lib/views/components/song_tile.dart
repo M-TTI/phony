@@ -37,7 +37,6 @@ class SongTile extends StatelessWidget {
           SizedBox(
             height: 80,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(width: 16),
                 CoverArt(size: 48, imagePath: song.imagePath),

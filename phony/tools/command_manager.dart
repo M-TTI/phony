@@ -26,13 +26,13 @@ int main(List<String> args) {
   try {
     switch (input) {
       case '1':
-        String dbPath = _getDatabasePath();
+        final dbPath = _getDatabasePath();
         _findAllSongs(dbPath);
       case '2':
-        String dbPath = _getDatabasePath();
+        final dbPath = _getDatabasePath();
         _seedDatabase(dbPath);
       case '3':
-        String dbPath = _getDatabasePath();
+        final dbPath = _getDatabasePath();
         _wipeDatabase(dbPath);
         stdout.writeln('Database wiped.');
       default:
@@ -67,7 +67,7 @@ void _seedDatabase(String dbPath) {
   if (!file.existsSync()) {
     throw Exception('Database not found at: $dbPath');
   } else {
-    Database db = sqlite3.open(dbPath);
+    final Database db = sqlite3.open(dbPath);
     final sqlFiles =
         'INSERT INTO song_files (id, path, name, artist, duration, checksum, size, last_modified) VALUES'
         '(1, "/home/mtti/Music/phony.mp3", "Phony", "Kafu", 190, "", 3040000, 1751500800),'
@@ -121,7 +121,7 @@ void _findAllSongs(String dbPath) {
   if (!file.existsSync()) {
     throw Exception('Database not found at: $dbPath');
   } else {
-    Database db = sqlite3.open(dbPath);
+    final db = sqlite3.open(dbPath);
     final result = db.select('SELECT * FROM songs');
 
     stdout.writeln('${'title'.padRight(30)} | duration');

@@ -69,7 +69,7 @@ class LibraryScanService {
       (await md5.bind(file.openRead()).first).toString();
 
   Future<void> _insertNewSong(File file, String checksum) async {
-    final AudioMetadata metadata = readMetadata(file, getImage: false);
+    final AudioMetadata metadata = readMetadata(file);
     final FileStat stat = await file.stat();
     final String fallbackTitle = p.basenameWithoutExtension(file.path);
 
@@ -80,7 +80,6 @@ class LibraryScanService {
         artist: metadata.artist,
         hasMetaData: metadata.title != null,
         duration: metadata.duration?.inSeconds ?? 0,
-        imagePath: null,
         file: SongFile(
           id: 0,
           path: file.path,

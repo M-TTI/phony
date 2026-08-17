@@ -17,9 +17,9 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: .zero,
         children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: t.primary),
-            child: const Align(
+          const DrawerHeader(
+            decoration: BoxDecoration(color: t.primary),
+            child: Align(
               alignment: .bottomLeft,
               child: Text(
                 'Phony',
@@ -70,7 +70,6 @@ class AppDrawer extends StatelessWidget {
               if (Platform.isAndroid) {
                 final FilePickerResult? picked = await FilePicker.pickFiles(
                   allowMultiple: true,
-                  type: .any,
                   dialogTitle: 'Select .osz beatmaps',
                 );
 
@@ -90,7 +89,7 @@ class AppDrawer extends StatelessWidget {
 
               if (paths.isEmpty) {
                 messenger.showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text('None of the selected files were .osz'),
                   ),
                 );

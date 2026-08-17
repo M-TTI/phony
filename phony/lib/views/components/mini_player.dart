@@ -31,12 +31,12 @@ class MiniPlayer extends StatelessWidget {
                         .clamp(0.0, 1.0),
               minHeight: 3,
               backgroundColor: t.background,
-              valueColor: AlwaysStoppedAnimation<Color>(t.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(t.primary),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Row(
               children: [
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(child: Text(song.title, overflow: .ellipsis)),
                 IconButton(
                   onPressed: () => playerVm.togglePlay(),
@@ -45,10 +45,10 @@ class MiniPlayer extends StatelessWidget {
                     color: t.onPrimary,
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
               ],
             ),
-            Padding(padding: .only(bottom: 4)),
+            const Padding(padding: .only(bottom: 4)),
           ],
         ),
       ),

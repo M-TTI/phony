@@ -38,7 +38,6 @@ class PlaylistTile extends StatelessWidget {
           SizedBox(
             height: 80,
             child: Row(
-              crossAxisAlignment: .center,
               children: [
                 const SizedBox(width: 16),
                 const CoverArt(size: 48),
