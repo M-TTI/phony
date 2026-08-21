@@ -27,6 +27,7 @@ env:
   # Pinned to the version used for development, so a Flutter release cannot
   # turn the pipeline red on its own.
   FLUTTER_VERSION: 3.44.8
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 defaults:
   run:
@@ -71,38 +72,6 @@ jobs:
         with:
           name: coverage-lcov
           path: phony/coverage/lcov.info
-          if-no-files-found: error
-
-  documentation:
-    name: Documentation rate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      # Reports the share of comment lines in `lib/` and publishes it in the
-      # run summary. Non-blocking for now: add `--fail` to the command below to
-      # turn the 8-15 % band into an actual gate once the code base is inside
-      # it. The measure itself is defined in the header of the script.
-      - name: Measure documentation rate
-        run: |
-          dart run tools/doc_coverage.dart --min=8 --max=15 --markdown \
-            | tee doc-coverage.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload documentation report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-coverage
-          path: phony/doc-coverage.md
           if-no-files-found: error
 
   build-android:

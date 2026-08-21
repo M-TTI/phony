@@ -123,9 +123,7 @@ class OszImportService {
         await File(imagePath).writeAsBytes(bgEntry.content);
       }
 
-      final AudioMetadata metadata = readMetadata(
-        File(audioPath),
-      );
+      final AudioMetadata metadata = readMetadata(File(audioPath));
       final FileStat stat = await File(audioPath).stat();
       final String? artist = info.artist.isEmpty ? null : info.artist;
 

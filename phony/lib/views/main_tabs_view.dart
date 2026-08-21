@@ -68,8 +68,10 @@ class MainTabsViewState extends State<MainTabsView>
   Future<void> _showCreatePlaylistDialog(BuildContext context) async {
     final String? name = await showDialog<String>(
       context: context,
-      builder: (_) =>
-          const PlaylistNameDialog(title: 'New playlist', confirmLabel: 'Create'),
+      builder: (_) => const PlaylistNameDialog(
+        title: 'New playlist',
+        confirmLabel: 'Create',
+      ),
     );
 
     final String trimmed = name?.trim() ?? '';

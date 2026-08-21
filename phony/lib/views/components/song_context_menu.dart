@@ -34,9 +34,7 @@ class SongContextMenu extends StatelessWidget {
           leadingIcon: const Icon(t.addIcon, size: 20),
           menuChildren: [
             if (playlists.isEmpty)
-              const MenuItemButton(
-                child: Text('No playlists'),
-              ),
+              const MenuItemButton(child: Text('No playlists')),
             for (final playlist in playlists)
               MenuItemButton(
                 leadingIcon: containing.contains(playlist.id)
