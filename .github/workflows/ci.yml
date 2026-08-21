@@ -73,38 +73,6 @@ jobs:
           path: phony/coverage/lcov.info
           if-no-files-found: error
 
-  documentation:
-    name: Documentation rate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      # Reports the share of comment lines in `lib/` and publishes it in the
-      # run summary. Non-blocking for now: add `--fail` to the command below to
-      # turn the 8-15 % band into an actual gate once the code base is inside
-      # it. The measure itself is defined in the header of the script.
-      - name: Measure documentation rate
-        run: |
-          dart run tools/doc_coverage.dart --min=8 --max=15 --markdown \
-            | tee doc-coverage.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload documentation report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-coverage
-          path: phony/doc-coverage.md
-          if-no-files-found: error
-
   build-android:
     name: Android APK
     runs-on: ubuntu-latest
