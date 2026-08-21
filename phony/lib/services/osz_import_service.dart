@@ -31,10 +31,14 @@ class OszImportService {
   final SongRepository _songRepository;
   final SongFileRepository _songFileRepository;
 
-  Future<ImportResult> importFiles(List<String> oszPaths) async {
+  Future<ImportResult> importFiles(
+    List<String> oszPaths, {
+    void Function(int done, int total)? onProgress,
+  }) async {
     int imported = 0;
     int skipped = 0;
     int failed = 0;
+    int done = 0;
 
     final Directory targetDir = Directory(
       p.join((await getApplicationSupportDirectory()).path, 'imported'),
@@ -58,6 +62,8 @@ class OszImportService {
       } catch (_) {
         failed++;
       }
+
+      onProgress?.call(++done, oszPaths.length);
     }
 
     return ImportResult(imported: imported, skipped: skipped, failed: failed);

@@ -93,6 +93,8 @@ class AppDrawer extends StatelessWidget {
                     content: Text('None of the selected files were .osz'),
                   ),
                 );
+
+                return;
               }
 
               final ImportResult? result = await songVm.importOsz(paths);

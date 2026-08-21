@@ -18,6 +18,9 @@ class SongViewmodel extends ChangeNotifier {
   bool isScanning = false;
   bool isImporting = false;
 
+  int importDone = 0;
+  int importTotal = 0;
+
   SongViewmodel(this._songRepository, this._scanService, this._importService) {
     _streamSubscription = _songRepository.watchAll().listen((data) {
       songs = data;
@@ -43,12 +46,23 @@ class SongViewmodel extends ChangeNotifier {
   Future<ImportResult?> importOsz(List<String> paths) async {
     if (isImporting) return null;
     isImporting = true;
+    importDone = 0;
+    importTotal = paths.length;
     notifyListeners();
 
     try {
-      return await _importService.importFiles(paths);
+      return await _importService.importFiles(
+        paths,
+        onProgress: (done, total) {
+          importDone = done;
+          importTotal = total;
+          notifyListeners();
+        },
+      );
     } finally {
       isImporting = false;
+      importDone = 0;
+      importTotal = 0;
       notifyListeners();
     }
   }

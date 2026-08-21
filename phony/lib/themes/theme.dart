@@ -101,5 +101,9 @@ ThemeData buildTheme() {
       hoverColor: primaryHovered,
       splashColor: primaryPressed,
     ),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: onPrimary,
+      linearTrackColor: primaryHovered,
+    ),
   );
 }
