@@ -82,7 +82,7 @@ class LibraryScanService {
     try {
       return readMetadata(file, getImage: true);
     } catch (_) {
-      return readMetadata(file, getImage: false);
+      return readMetadata(file);
     }
   }
 
