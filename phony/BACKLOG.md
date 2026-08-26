@@ -209,10 +209,20 @@ move/rename/dedupe logic rests on.
 
 ## Deferred
 
-- Delete on-disk files under `imported/` when their song is deleted. Once covers are
-  no longer checksum-named (item 2 folder fallbacks), a path could be reused with
-  different bytes and show stale art — the fix then is `FileImage(File(path)).evict()`
-  on delete.
+- **Delete on-disk files when their song is deleted — now needs care.** A naive
+  unlink of `song.imagePath` is actively dangerous after item 2:
+  - Covers in `covers/` are named by image hash, so **one file backs every track on
+    the album**. Deleting one song's cover blanks its siblings. Needs a refcount —
+    `SELECT COUNT(*) FROM songs WHERE image_path = ?` — before unlinking.
+  - Folder covers point at the **user's own music directory** (`_findFolderCover`
+    returns the path uncopied). Unlinking one would delete their `cover.jpg` out of
+    their album folder. Any cleanup must first check the path is under `covers/`.
+  - Audio under `imported/` is checksum-named and 1:1 with a song, so it is the only
+    part that is safe to delete outright.
+  - Stale-decode note: a path under `covers/` or `imported/` can never come back
+    holding different bytes, so no eviction is needed there. Folder covers can — if
+    the user replaces `cover.jpg` in place, the decoded image stays cached under the
+    same key. Fix is `FileImage(File(path)).evict()`.
 - Drag-and-drop import — attempted and cancelled, `onDragExited` unreliable on GTK.
 - "Open with" file association — release-packaging milestone.
 - Bundle `libmpv.so.2` or document the system dependency (`mpv-libs` on Fedora,
