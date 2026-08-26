@@ -44,28 +44,74 @@ Dart, runs once *per song* rather than per archive, so it may cost more in aggre
 than the decode. Worth a stopwatch before item 7 is scoped.
 
 ### 2. Embedded cover art for scanned files
-**Status:** not started
+**Status:** done — not yet verified against a real upgrade (see below)
 
-Only osz imports have covers today. `audio_metadata_reader` already parses ID3v2
-APIC, FLAC PICTURE blocks, MP4 `covr`, Vorbis and APE — `library_scan_service.dart:69`
-explicitly opts out with `getImage: false`. Flipping it to `true` exposes
-`metadata.pictures` (`List<Picture>`: `bytes`, `mimetype`, `pictureType`).
+`CoverArtService` extracts art via `readMetadata(file, getImage: true)`, which
+already parses ID3v2 APIC, FLAC PICTURE blocks, MP4 `covr`, Vorbis and APE.
 
-- Store as files under `getApplicationSupportDirectory()/covers/`, mirroring the
-  `imported/` convention. Not as DB blobs — they would be pulled into every
+- Covers are written to `getApplicationSupportDirectory()/covers/`, mirroring the
+  `imported/` convention. Not DB blobs — those would be pulled into every
   `watchAll()` emission.
-- Name by hash of the *image* bytes, not the audio checksum: a 40-track album ships
-  the same JPEG 40 times, so this collapses to one file on disk.
-- Pick `pictureType == PictureType.coverFront`, else `pictures.first`. Derive the
-  extension from `mimetype` with a magic-byte sniff as fallback.
-- Fallback for files with no embedded art: `cover.jpg` / `folder.jpg` / `front.jpg`
-  in the same directory. Common in rips, ~10 lines, no decoding.
-- **The real work is backfill.** Existing songs have `imagePath: null` and their
-  paths are already in `SongFiles`, so scan phase 1 matches by path and skips them
-  forever. Needs a `coverChecked` boolean column so "checked, found nothing" is
-  distinguishable from "never checked" — schema change plus `build_runner`.
-- Only new files pay the extraction cost; `readMetadata` is called from
-  `_insertNewSong` only.
+- **Named by hash of the image bytes**, not the audio checksum. A 40-track album
+  embeds the same JPEG 40 times; this collapses it to one file, and the
+  `if (!await target.exists())` guard makes re-scans idempotent.
+- Picture choice is `PictureType.coverFront`, else `pictures.first` — files
+  routinely carry back covers, artist photos and CD labels too.
+- Extension comes from **magic bytes first**, declared mimetype second: embedded
+  types are frequently wrong (`image/jpg`, bare `JPG`, empty, PNG labelled JPEG).
+  Unknown format falls through to the folder cover rather than returning null.
+- Folder fallback (`cover` / `folder` / `front` / `album` / `albumart`) returns the
+  existing path **uncopied** — the file is already on disk. Ranked by position in
+  `_folderCoverNames` so a directory holding both `cover.jpg` and `folder.jpg`
+  resolves deterministically. Cached per-directory (`containsKey`, since null is a
+  valid cached answer) because "no cover here" costs a full directory listing and
+  would otherwise be recomputed for all 20 tracks in an album.
+- `clearCache()` at the top of `scan()`: the service outlives a scan, so without it
+  art added between scans stays invisible until restart.
+
+**Schema:** `Songs.coverChecked` plus the project's first `MigrationStrategy`
+(schema v2). The column exists to separate "checked, found nothing" from "never
+checked" — without it the backfill would re-read metadata for every art-less song on
+every scan, forever. The migration uses `if (from < 2)` rather than `== 1` so
+multi-version upgrades compose, and spells out `onCreate` because supplying a
+strategy replaces the default wholesale.
+
+`coverChecked` is deliberately **not** on the `Song` model — it is bookkeeping no
+view reads, so `_toModel` needed no change and no `Song(...)` construction site was
+touched. `insertScanned` takes it as an optional named arg defaulting to `false`
+rather than hardcoding `true`, because `OszImportService` calls the same method and
+never examines embedded art; defaulting false means a forgotten call site is merely
+re-examined later.
+
+**Backfill** (`_backfillCovers`, phase 3) queries
+`imagePath IS NULL AND coverChecked = false`, which also excludes osz songs that
+already have a background. Writes go through `AppDatabase.setCoverArt` using drift's
+`batch()` — one transaction and **one** stream emission for the whole chunk. This is
+where `batch()` fits and the insert path (item 4) cannot: updates need no returned
+ids. Files missing on disk `continue` without being marked checked, so a restored
+file can still be picked up; marking them would be unrecoverable, since neither
+phase 1 nor phase 2 re-examines art.
+
+Failure handling: `_readMetadata` retries with `getImage: false` when picture
+parsing throws, so a corrupt APIC frame costs the embedded image but not the track
+and not the folder-cover fallback. `resolve` is separately wrapped at both call
+sites so a full disk cannot turn a cover problem into a lost song.
+
+`scan()` was restructured so that an unreachable music directory (missing, or
+Android permission denied) stops only the file phases — the backfill reads paths
+from the database and still runs. An osz-only user with no `~/Music` was previously
+getting no backfill at all.
+
+**Not yet verified:** the migration has not been run against a real pre-v2 database.
+Copy the DB out of `getApplicationSupportDirectory()` first, then check that songs
+survive, that the first scan reports a non-zero `covered`, and that an immediate
+second scan reports `0` — that second run is what proves `coverChecked` persists
+rather than the work being redone every time.
+
+**Loose end:** `_imageExtensions` (folder lookup) covers `.jpg .jpeg .png .webp`,
+but `_extensionFor` (embedded art) also handles `.gif` and `.bmp` — so `cover.gif`
+next to an mp3 is ignored while an embedded GIF is extracted fine. Harmless, but
+inconsistent.
 
 ### 3. Song list RAM usage
 **Status:** done

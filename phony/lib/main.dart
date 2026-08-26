@@ -9,6 +9,7 @@ import 'package:phony/repositories/drift_song_repository.dart';
 import 'package:phony/repositories/playlist_repository.dart';
 import 'package:phony/repositories/prefs_app_player_state_repository.dart';
 import 'package:phony/services/audio_player_service.dart';
+import 'package:phony/services/cover_art_service.dart';
 import 'package:phony/services/library_scan_service.dart';
 import 'package:phony/services/media_session_handler.dart';
 import 'package:phony/services/osz_import_service.dart';
@@ -42,9 +43,11 @@ void main() async {
   final playlistRepository = DriftPlaylistRepository(db);
   final appPlayStateRepository = PrefsAppPlayerStateRepository(prefs);
 
+  final coverArtService = CoverArtService();
   final libraryScanService = LibraryScanService(
     songRepository,
     songFileRepository,
+    coverArtService,
   );
   final oszImportService = OszImportService(songRepository, songFileRepository);
   final audioPlayerService = AudioPlayerService();
