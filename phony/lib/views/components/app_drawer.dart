@@ -45,7 +45,7 @@ class AppDrawer extends StatelessWidget {
                 messenger.showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Scan complete: ${result.added} added, ${result.moved} moved, ${result.skipped} skipped, ${result.failed} failed',
+                      'Scan complete: ${result.added} added, ${result.covered} cover(s) added, ${result.moved} moved, ${result.skipped} skipped, ${result.failed} failed',
                     ),
                   ),
                 );
@@ -93,6 +93,8 @@ class AppDrawer extends StatelessWidget {
                     content: Text('None of the selected files were .osz'),
                   ),
                 );
+
+                return;
               }
 
               final ImportResult? result = await songVm.importOsz(paths);

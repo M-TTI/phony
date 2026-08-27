@@ -36,13 +36,14 @@ class DriftSongRepository implements SongRepository {
   Future<void> delete(int id) => _db.deleteSong(id);
 
   @override
-  Future<void> insertScanned(Song song) async {
+  Future<void> insertScanned(Song song, {bool coverChecked = false}) async {
     final SongsCompanion songCompanion = SongsCompanion(
       title: Value(song.title),
       artist: Value(song.artist),
       duration: Value(song.duration),
       hasMetaData: Value(song.hasMetaData),
       imagePath: Value(song.imagePath),
+      coverChecked: Value(coverChecked),
     );
 
     final SongFile file = song.file;
@@ -59,6 +60,15 @@ class DriftSongRepository implements SongRepository {
 
     await _db.insertScannedSong(songFilesCompanion, songCompanion);
   }
+
+  @override
+  Future<List<Song>> getSongsNeedingCoverCheck() async {
+    final rows = await _db.getSongsNeedingCoverCheck();
+    return rows.map((r) => _toModel(r.$1, r.$2)).toList();
+  }
+
+  @override
+  Future<void> setCoverArt(Map<int, String?> covers) => _db.setCoverArt(covers);
 
   Song _toModel(SongsData song, SongFilesData file) => Song(
     id: song.id,

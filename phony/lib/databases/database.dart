@@ -18,6 +18,7 @@ class Songs extends Table {
   late final duration = integer()();
   late final imagePath = text().nullable()();
   late final hasMetaData = boolean().withDefault(const Constant(false))();
+  late final coverChecked = boolean().withDefault(const Constant(false))();
 }
 
 @DataClassName('SongFilesData')
@@ -53,7 +54,17 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) => m.createAll(),
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.addColumn(songs, songs.coverChecked);
+      }
+    },
+  );
 
   ///
   /// Songs
@@ -95,6 +106,33 @@ class AppDatabase extends _$AppDatabase {
 
     return true;
   });
+
+  Future<List<(SongsData, SongFilesData)>> getSongsNeedingCoverCheck() async {
+    final query = select(songs).join([
+      innerJoin(songFiles, songFiles.id.equalsExp(songs.songFileId)),
+    ])..where(songs.imagePath.isNull() & songs.coverChecked.equals(false));
+
+    final rows = await query.get();
+
+    return rows
+        .map((row) => (row.readTable(songs), row.readTable(songFiles)))
+        .toList();
+  }
+
+  Future<void> setCoverArt(Map<int, String?> covers) async {
+    await batch((b) {
+      for (final MapEntry<int, String?> entry in covers.entries) {
+        b.update(
+          songs,
+          SongsCompanion(
+            imagePath: Value(entry.value),
+            coverChecked: const Value(true),
+          ),
+          where: ($SongsTable s) => s.id.equals(entry.key),
+        );
+      }
+    });
+  }
 
   ///
   /// SongFiles

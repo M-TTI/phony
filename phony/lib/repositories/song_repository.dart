@@ -9,5 +9,9 @@ abstract class SongRepository {
 
   Future<void> delete(int id);
 
-  Future<void> insertScanned(Song song);
+  Future<void> insertScanned(Song song, {bool coverChecked = false});
+
+  Future<List<Song>> getSongsNeedingCoverCheck();
+
+  Future<void> setCoverArt(Map<int, String?> covers);
 }
