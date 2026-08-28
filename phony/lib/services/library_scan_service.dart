@@ -1,8 +1,11 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:crypto/crypto.dart';
 import 'package:external_path/external_path.dart';
+import 'package:ffi/src/utf16.dart';
+import 'package:media_kit/ffi/src/allocation.dart';
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phony/models/song.dart';
@@ -10,6 +13,7 @@ import 'package:phony/models/song_file.dart';
 import 'package:phony/repositories/song_file_repository.dart';
 import 'package:phony/repositories/song_repository.dart';
 import 'package:phony/services/cover_art_service.dart';
+import 'package:win32/win32.dart';
 
 class ScanResult {
   final int added;
@@ -70,6 +74,33 @@ class LibraryScanService {
       }
 
       return '$home/Music';
+    }
+
+    if (Platform.isWindows) {
+      try {
+        final Pointer<Pointer<Utf16>> pathPtrPtr = calloc<Pointer<Utf16>>();
+        try {
+          final int hr = SHGetKnownFolderPath(
+            FOLDERID_Music as Pointer<GUID>,
+            KF_FLAG_DEFAULT,
+            NULL,
+            pathPtrPtr,
+          );
+
+          if (hr == S_OK) {
+            final String path = pathPtrPtr.value.toDartString();
+            CoTaskMemFree(pathPtrPtr.value.cast());
+            if (path.isNotEmpty) return path;
+          }
+        } finally {
+          calloc.free(pathPtrPtr);
+        }
+      } catch (_) {
+        // fall through to the default below.
+      }
+
+      final String userProfile = Platform.environment['USERPROFILE'] ?? '';
+      return '$userProfile\\Music';
     }
 
     return '';
