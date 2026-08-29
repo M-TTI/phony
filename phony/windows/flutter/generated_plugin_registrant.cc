@@ -6,12 +6,12 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <audiotags/audiotags_plugin_c_api.h>
-#include <sqlite3_flutter_libs/sqlite3_flutter_libs_plugin.h>
+#include <media_kit_libs_windows_audio/media_kit_libs_windows_audio_plugin_c_api.h>
+#include <permission_handler_windows/permission_handler_windows_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  AudiotagsPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("AudiotagsPluginCApi"));
-  Sqlite3FlutterLibsPluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("Sqlite3FlutterLibsPlugin"));
+  MediaKitLibsWindowsAudioPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("MediaKitLibsWindowsAudioPluginCApi"));
+  PermissionHandlerWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
 }
