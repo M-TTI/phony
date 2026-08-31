@@ -4,8 +4,6 @@ Supported audio formats : `.mp3`, `.flac`, `.ogg`, `.wav`.
 
 ## Installation
 ### Android
-Download the apk from the [releases page](https://github.com/M-TTI/phony/releases).
-
 Requires Android 5.0 (API 21) or newer.
 
 1. Enable installation from unknown sources for your browser or file manager (Settings -> Apps -> Special access -> Install unknown apps).
