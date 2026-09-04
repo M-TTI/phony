@@ -38,6 +38,11 @@ class CoverArtService {
 
   void clearCache() => _folderCovers.clear();
 
+  void reset() {
+    _coversDir = null;
+    clearCache();
+  }
+
   Picture? _pickPicture(List<Picture> pictures) {
     if (pictures.isEmpty) return null;
 
