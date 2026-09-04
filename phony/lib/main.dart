@@ -3,6 +3,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:phony/databases/database.dart';
+import 'package:phony/repositories/drift_maintenance_repository.dart';
 import 'package:phony/repositories/drift_playlist_repository.dart';
 import 'package:phony/repositories/drift_song_file_repository.dart';
 import 'package:phony/repositories/drift_song_repository.dart';
@@ -10,6 +11,7 @@ import 'package:phony/repositories/playlist_repository.dart';
 import 'package:phony/repositories/prefs_app_player_state_repository.dart';
 import 'package:phony/services/audio_player_service.dart';
 import 'package:phony/services/cover_art_service.dart';
+import 'package:phony/services/library_reset_service.dart';
 import 'package:phony/services/library_scan_service.dart';
 import 'package:phony/services/media_session_handler.dart';
 import 'package:phony/services/osz_import_service.dart';
@@ -41,6 +43,7 @@ void main() async {
   final songRepository = DriftSongRepository(db);
   final songFileRepository = DriftSongFileRepository(db);
   final playlistRepository = DriftPlaylistRepository(db);
+  final maintenanceRepository = DriftMaintenanceRepository(db);
   final appPlayStateRepository = PrefsAppPlayerStateRepository(prefs);
 
   final coverArtService = CoverArtService();
@@ -51,6 +54,11 @@ void main() async {
   );
   final oszImportService = OszImportService(songRepository, songFileRepository);
   final audioPlayerService = AudioPlayerService();
+  final libraryResetService = LibraryResetService(
+    maintenanceRepository,
+    coverArtService,
+    appPlayStateRepository,
+  );
 
   runApp(
     MultiProvider(
@@ -60,6 +68,7 @@ void main() async {
             songRepository,
             libraryScanService,
             oszImportService,
+            libraryResetService,
           ),
         ),
         ChangeNotifierProvider(

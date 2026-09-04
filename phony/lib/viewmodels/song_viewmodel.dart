@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:phony/models/song.dart';
 import 'package:phony/repositories/song_repository.dart';
+import 'package:phony/services/library_reset_service.dart';
 import 'package:phony/services/library_scan_service.dart';
 import 'package:phony/services/osz_import_service.dart';
 
@@ -11,6 +12,7 @@ class SongViewmodel extends ChangeNotifier {
 
   final LibraryScanService _scanService;
   final OszImportService _importService;
+  final LibraryResetService _libraryResetService;
 
   List<Song> songs = [];
   StreamSubscription<List<Song>>? _streamSubscription;
@@ -21,7 +23,12 @@ class SongViewmodel extends ChangeNotifier {
   int importDone = 0;
   int importTotal = 0;
 
-  SongViewmodel(this._songRepository, this._scanService, this._importService) {
+  SongViewmodel(
+    this._songRepository,
+    this._scanService,
+    this._importService,
+    this._libraryResetService,
+  ) {
     _streamSubscription = _songRepository.watchAll().listen((data) {
       songs = data;
       notifyListeners();
@@ -29,6 +36,9 @@ class SongViewmodel extends ChangeNotifier {
   }
 
   Future<void> delete(int id) => _songRepository.delete(id);
+
+  /// TODO: Move this to the SettingsViewmodel when it gets implemented.
+  Future<void> resetLibrary() => _libraryResetService.reset();
 
   Future<ScanResult?> scanLibrary() async {
     if (isScanning) return null;

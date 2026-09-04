@@ -225,6 +225,18 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<PlaylistEntriesData>> watchAllPlaylistEntries() =>
       select(playlistEntries).watch();
+
+  ///
+  /// Maintenance
+  ///
+
+  /// Deletes the whole db, should only be called by LibraryResetService.
+  Future<void> resetDatabase() => transaction(() async {
+    await delete(playlistEntries).go();
+    await delete(playlists).go();
+    await delete(songs).go();
+    await delete(songFiles).go();
+  });
 }
 
 LazyDatabase _openConnection() {

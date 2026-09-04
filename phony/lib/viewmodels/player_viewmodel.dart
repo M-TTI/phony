@@ -31,7 +31,7 @@ class PlayerViewmodel extends ChangeNotifier {
       ..onNext = next
       ..onPrevious = previous
       ..onSeek = seek
-      ..onStop = _stopAndClear
+      ..onStop = stopAndClear
       ..onClose = _closeSession
       ..onSetShuffle = ((AudioServiceShuffleMode mode) =>
           setShuffle(mode != .none))
@@ -274,7 +274,7 @@ class PlayerViewmodel extends ChangeNotifier {
       await _audioPlayerService.play(_queue[_currentIndex].file.path);
       _syncMediaSession();
     } else {
-      await _mediaSessionHandler.stop();
+      await stopAndClear();
 
       return;
     }
@@ -303,7 +303,7 @@ class PlayerViewmodel extends ChangeNotifier {
     unawaited(_saveState());
   }
 
-  Future<void> _stopAndClear() async {
+  Future<void> stopAndClear() async {
     await _audioPlayerService.stop();
     _queue = [];
     _originalQueue = [];
