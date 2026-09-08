@@ -84,6 +84,8 @@ class PlayerViewmodel extends ChangeNotifier {
     unawaited(_restoreState());
   }
 
+  static const double _androidAudioVolume = 50.0;
+
   final AudioPlayerService _audioPlayerService;
   final SongRepository _songRepository;
   final PlaylistRepository _playlistRepository;
@@ -102,7 +104,7 @@ class PlayerViewmodel extends ChangeNotifier {
   Duration duration = .zero;
   bool shuffleEnabled = false;
   RepeatMode repeatMode = .none;
-  double volume = 100;
+  double volume = 50.0;
   bool isMuted = false;
   bool _resumeAfterInterruption = false;
 
@@ -349,7 +351,11 @@ class PlayerViewmodel extends ChangeNotifier {
 
   Future<void> _restoreState() async {
     final AppPlayerState? state = await _stateRepository.load();
-    if (state == null) return;
+    if (state == null) {
+      await _audioPlayerService.setVolume(50);
+
+      return;
+    }
 
     volume = state.volume;
     isMuted = state.isMuted;
@@ -357,7 +363,7 @@ class PlayerViewmodel extends ChangeNotifier {
     repeatMode = state.repeatMode;
     await _audioPlayerService.setVolume(
       Platform.isAndroid
-          ? 100.0
+          ? _androidAudioVolume
           : isMuted
           ? 0
           : volume,
