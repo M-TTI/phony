@@ -29,7 +29,8 @@ Video,0,"video.mp4"
     final OszBeatmapInfo? info = OszBeatmapParser.parse(fullBeatmap);
     expect(info, isNotNull);
     expect(info!.audioFilename, 'audio.mp3');
-    expect(info.title, '精神ノ乖離ノ、叫ビト嘆キ。');
+    expect(info.title, 'Seishin no Kairi no, Sakebi to Nageki.');
+    expect(info.titleUnicode, '精神ノ乖離ノ、叫ビト嘆キ。');
     expect(info.artist, 'Imperial Circus Dead Decadence');
     expect(info.backgroundFilename, 'bg.jpg');
   });
@@ -48,6 +49,7 @@ ArtistUnicode:
     final OszBeatmapInfo? info = OszBeatmapParser.parse(beatmap);
     expect(info!.title, 'Plain Song');
     expect(info.artist, 'Somebody');
+    expect(info.titleUnicode, isEmpty);
   });
 
   test('video events are not mistaken for a background', () {

@@ -131,14 +131,25 @@ class OszImportService {
 
       final AudioMetadata metadata = readMetadata(File(audioPath));
       final FileStat stat = await File(audioPath).stat();
+      final String? titleUnicode =
+          (info.titleUnicode == null || info.titleUnicode!.isEmpty)
+          ? null
+          : info.titleUnicode;
       final String? artist = info.artist.isEmpty ? null : info.artist;
+      final String? artistUnicode =
+          (info.artistUnicode == null || info.artistUnicode!.isEmpty)
+          ? null
+          : info.artistUnicode;
 
       await _songRepository.insertScanned(
         Song(
           id: 0,
           title: info.title,
+          titleUnicode: titleUnicode,
           artist: artist,
+          artistUnicode: artistUnicode,
           hasMetaData: true,
+          isFromOsz: true,
           duration: metadata.duration?.inSeconds ?? 0,
           imagePath: imagePath,
           file: SongFile(
@@ -149,8 +160,11 @@ class OszImportService {
             duration: metadata.duration?.inSeconds ?? 0,
             checksum: checksum,
             size: stat.size,
-            lastModified: stat.modified,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
           ),
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         ),
       );
       knownChecksums.add(checksum);

@@ -24,11 +24,14 @@ class DriftSongRepository implements SongRepository {
   Future<void> insert(Song song) => _db.insertSong(
     SongsCompanion(
       title: Value(song.title),
+      titleUnicode: Value(song.titleUnicode),
       artist: Value(song.artist),
+      artistUnicode: Value(song.artistUnicode),
       songFileId: Value(song.file.id),
       duration: Value(song.duration),
       imagePath: Value(song.imagePath),
       hasMetaData: Value(song.hasMetaData),
+      isFromOsz: Value(song.isFromOsz),
     ),
   );
 
@@ -39,10 +42,13 @@ class DriftSongRepository implements SongRepository {
   Future<void> insertScanned(Song song, {bool coverChecked = false}) async {
     final SongsCompanion songCompanion = SongsCompanion(
       title: Value(song.title),
+      titleUnicode: Value(song.titleUnicode),
       artist: Value(song.artist),
+      artistUnicode: Value(song.artistUnicode),
       duration: Value(song.duration),
       hasMetaData: Value(song.hasMetaData),
       imagePath: Value(song.imagePath),
+      isFromOsz: Value(song.isFromOsz),
       coverChecked: Value(coverChecked),
     );
 
@@ -55,7 +61,6 @@ class DriftSongRepository implements SongRepository {
       duration: Value(file.duration),
       checksum: Value(file.checksum),
       size: Value(file.size),
-      lastModified: Value(file.lastModified),
     );
 
     await _db.insertScannedSong(songFilesCompanion, songCompanion);
@@ -73,7 +78,9 @@ class DriftSongRepository implements SongRepository {
   Song _toModel(SongsData song, SongFilesData file) => Song(
     id: song.id,
     title: song.title,
+    titleUnicode: song.titleUnicode,
     artist: song.artist,
+    artistUnicode: song.artistUnicode,
     file: SongFile(
       id: file.id,
       name: file.name,
@@ -82,10 +89,14 @@ class DriftSongRepository implements SongRepository {
       duration: file.duration,
       checksum: file.checksum,
       size: file.size,
-      lastModified: file.lastModified,
+      createdAt: file.createdAt,
+      updatedAt: file.updatedAt,
     ),
     duration: song.duration,
     imagePath: song.imagePath,
     hasMetaData: song.hasMetaData,
+    isFromOsz: song.isFromOsz,
+    createdAt: song.createdAt,
+    updatedAt: song.updatedAt,
   );
 }

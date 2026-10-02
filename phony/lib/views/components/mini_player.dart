@@ -37,7 +37,7 @@ class MiniPlayer extends StatelessWidget {
             Row(
               children: [
                 const SizedBox(width: 16),
-                Expanded(child: Text(song.title, overflow: .ellipsis)),
+                Expanded(child: Text(song.titleLabel, overflow: .ellipsis)),
                 IconButton(
                   onPressed: () => playerVm.togglePlay(),
                   icon: Icon(

@@ -26,6 +26,7 @@ class DriftSongFileRepository implements SongFileRepository {
       artist: Value(songFile.artist),
       duration: Value(songFile.duration),
       checksum: Value(songFile.checksum),
+      size: Value(songFile.size),
     ),
   );
 
@@ -48,6 +49,7 @@ class DriftSongFileRepository implements SongFileRepository {
     duration: row.duration,
     checksum: row.checksum,
     size: row.size,
-    lastModified: row.lastModified,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   );
 }

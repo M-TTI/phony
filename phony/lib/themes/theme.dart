@@ -41,6 +41,8 @@ const volumeUpIcon = Icons.volume_up_rounded;
 const volumeDownIcon = Icons.volume_down_rounded;
 const volumeOffIcon = Icons.volume_off_rounded;
 const warningIcon = Icons.warning_amber_rounded;
+const searchIcon = Icons.search_rounded;
+const closeIcon = Icons.close_rounded;
 
 // Buttons
 final ButtonStyle _filledButtonStyle = ButtonStyle(

@@ -13,12 +13,17 @@ part 'database.g.dart';
 class Songs extends Table {
   late final id = integer().autoIncrement()();
   late final title = text()();
+  late final titleUnicode = text().nullable()();
   late final artist = text().nullable()();
+  late final artistUnicode = text().nullable()();
   late final songFileId = integer().unique().references(SongFiles, #id)();
   late final duration = integer()();
   late final imagePath = text().nullable()();
   late final hasMetaData = boolean().withDefault(const Constant(false))();
   late final coverChecked = boolean().withDefault(const Constant(false))();
+  late final isFromOsz = boolean().withDefault(const Constant(false))();
+  late final createdAt = dateTime().withDefault(currentDateAndTime)();
+  late final updatedAt = dateTime().withDefault(currentDateAndTime)();
 }
 
 @DataClassName('SongFilesData')
@@ -30,13 +35,16 @@ class SongFiles extends Table {
   late final duration = integer()();
   late final checksum = text()();
   late final size = integer()();
-  late final lastModified = dateTime()();
+  late final createdAt = dateTime().withDefault(currentDateAndTime)();
+  late final updatedAt = dateTime().withDefault(currentDateAndTime)();
 }
 
 @DataClassName('PlaylistsData')
 class Playlists extends Table {
   late final id = integer().autoIncrement()();
   late final name = text()();
+  late final createdAt = dateTime().withDefault(currentDateAndTime)();
+  late final updatedAt = dateTime().withDefault(currentDateAndTime)();
 }
 
 @DataClassName('PlaylistEntriesData')
@@ -44,6 +52,8 @@ class PlaylistEntries extends Table {
   late final playlistId = integer().references(Playlists, #id)();
   late final songId = integer().references(Songs, #id)();
   late final position = integer()();
+  late final createdAt = dateTime().withDefault(currentDateAndTime)();
+  late final updatedAt = dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column> get primaryKey => {playlistId, songId};
@@ -54,17 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
-
-  @override
-  MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (Migrator m) => m.createAll(),
-    onUpgrade: (Migrator m, int from, int to) async {
-      if (from < 2) {
-        await m.addColumn(songs, songs.coverChecked);
-      }
-    },
-  );
+  int get schemaVersion => 1;
 
   ///
   /// Songs
@@ -127,6 +127,7 @@ class AppDatabase extends _$AppDatabase {
           SongsCompanion(
             imagePath: Value(entry.value),
             coverChecked: const Value(true),
+            updatedAt: Value(DateTime.now()),
           ),
           where: ($SongsTable s) => s.id.equals(entry.key),
         );
@@ -153,7 +154,11 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> updateSongFilePath(int id, String path, String name) =>
       (update(songFiles)..where((sf) => sf.id.equals(id))).write(
-        SongFilesCompanion(path: Value(path), name: Value(name)),
+        SongFilesCompanion(
+          path: Value(path),
+          name: Value(name),
+          updatedAt: Value(DateTime.now()),
+        ),
       );
 
   Future<int> insertScannedSong(SongFilesCompanion file, SongsCompanion song) =>
@@ -220,7 +225,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> renamePlaylist(int id, String name) =>
       (update(playlists)..where((p) => p.id.equals(id))).write(
-        PlaylistsCompanion(name: Value(name)),
+        PlaylistsCompanion(name: Value(name), updatedAt: Value(DateTime.now())),
       );
 
   Stream<List<PlaylistEntriesData>> watchAllPlaylistEntries() =>

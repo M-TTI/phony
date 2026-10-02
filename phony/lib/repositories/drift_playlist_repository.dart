@@ -13,7 +13,15 @@ class DriftPlaylistRepository implements PlaylistRepository {
   @override
   Stream<List<Playlist>> watchAll() => _db.watchAllPlaylists().map(
     (rows) => rows
-        .map((r) => Playlist(id: r.$1.id, name: r.$1.name, songCount: r.$2))
+        .map(
+          (r) => Playlist(
+            id: r.$1.id,
+            name: r.$1.name,
+            songCount: r.$2,
+            createdAt: r.$1.createdAt,
+            updatedAt: r.$1.updatedAt,
+          ),
+        )
         .toList(),
   );
 
@@ -23,8 +31,9 @@ class DriftPlaylistRepository implements PlaylistRepository {
       .map((rows) => rows.map((r) => _toSongModel(r.$1, r.$2)).toList());
 
   @override
-  Future<int> create(String name) =>
-      _db.insertPlaylist(PlaylistsCompanion(name: Value(name)));
+  Future<int> create(String name) => _db.insertPlaylist(
+    PlaylistsCompanion(name: Value(name)),
+  );
 
   @override
   Future<void> delete(int id) => _db.deletePlaylist(id);
@@ -59,7 +68,9 @@ class DriftPlaylistRepository implements PlaylistRepository {
   Song _toSongModel(SongsData song, SongFilesData file) => Song(
     id: song.id,
     title: song.title,
+    titleUnicode: song.titleUnicode,
     artist: song.artist,
+    artistUnicode: song.artistUnicode,
     file: SongFile(
       id: file.id,
       name: file.name,
@@ -68,10 +79,14 @@ class DriftPlaylistRepository implements PlaylistRepository {
       duration: file.duration,
       checksum: file.checksum,
       size: file.size,
-      lastModified: file.lastModified,
+      createdAt: file.createdAt,
+      updatedAt: file.updatedAt,
     ),
     duration: song.duration,
     imagePath: song.imagePath,
     hasMetaData: song.hasMetaData,
+    isFromOsz: song.isFromOsz,
+    createdAt: song.createdAt,
+    updatedAt: song.updatedAt,
   );
 }

@@ -6,7 +6,8 @@ class SongFile {
   final int duration;
   final String checksum;
   final int size;
-  final DateTime lastModified;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const SongFile({
     required this.id,
@@ -16,6 +17,7 @@ class SongFile {
     required this.duration,
     required this.checksum,
     required this.size,
-    required this.lastModified,
+    required this.createdAt,
+    required this.updatedAt,
   });
 }

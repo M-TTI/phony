@@ -50,11 +50,6 @@ class _PlayerViewState extends State<PlayerView> {
           sliderMax,
         );
 
-    final String? artist = song?.artist;
-    final String artistLabel = (artist == null || artist.isEmpty)
-        ? '-'
-        : artist;
-
     final QueueSource? source = playerVm.source;
     final String? sourceLabel = switch (source) {
       null => null,
@@ -139,7 +134,7 @@ class _PlayerViewState extends State<PlayerView> {
                                   ),
                                   const SizedBox(height: 32),
                                   Text(
-                                    song?.title ?? '-',
+                                    song?.titleLabel ?? '-',
                                     style: const TextStyle(
                                       fontSize: 22,
                                       fontWeight: .bold,
@@ -149,7 +144,7 @@ class _PlayerViewState extends State<PlayerView> {
                                     overflow: .ellipsis,
                                   ),
                                   Text(
-                                    artistLabel,
+                                    song?.artistLabel ?? '-',
                                     style: const TextStyle(
                                       fontSize: 16,
                                       color: t.onPrimaryMuted,

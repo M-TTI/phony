@@ -4,13 +4,17 @@ class OszBeatmapInfo {
   OszBeatmapInfo({
     required this.audioFilename,
     required this.title,
+    this.titleUnicode,
     required this.artist,
+    this.artistUnicode,
     required this.backgroundFilename,
   });
 
   final String audioFilename;
   final String title;
+  final String? titleUnicode;
   final String artist;
+  final String? artistUnicode;
   final String? backgroundFilename;
 }
 
@@ -60,21 +64,16 @@ class OszBeatmapParser {
       }
     }
 
-    final String resolvedTitle = titleUnicode.isNotEmpty ? titleUnicode : title;
-    final String resolvedArtist = artistUnicode.isNotEmpty
-        ? artistUnicode
-        : artist;
-
-    if (audioFilename == null ||
-        audioFilename.isEmpty ||
-        resolvedTitle.isEmpty) {
+    if (audioFilename == null || audioFilename.isEmpty || title.isEmpty) {
       return null;
     }
 
     return OszBeatmapInfo(
       audioFilename: audioFilename,
-      title: resolvedTitle,
-      artist: resolvedArtist,
+      title: title,
+      titleUnicode: titleUnicode,
+      artist: artist,
+      artistUnicode: artistUnicode,
       backgroundFilename: backgroundFilename,
     );
   }

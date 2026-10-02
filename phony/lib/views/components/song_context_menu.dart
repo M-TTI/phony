@@ -74,7 +74,7 @@ class SongContextMenu extends StatelessWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Remove "${song.title}" from "${playlist.name}"?'),
+        title: Text('Remove "${song.titleLabel}" from "${playlist.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -97,7 +97,7 @@ class SongContextMenu extends StatelessWidget {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Delete "${song.title}"?'),
+        title: Text('Delete "${song.titleLabel}"?'),
         content: const Text('This removes the song from your library.'),
         actions: [
           TextButton(

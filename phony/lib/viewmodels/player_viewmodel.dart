@@ -84,8 +84,10 @@ class PlayerViewmodel extends ChangeNotifier {
     unawaited(_restoreState());
   }
 
-  static const double _androidAudioVolume = 50.0;
+  // Constants
+  static const double _androidAudioVolume = 60.0;
 
+  // Services
   final AudioPlayerService _audioPlayerService;
   final SongRepository _songRepository;
   final PlaylistRepository _playlistRepository;
@@ -93,18 +95,20 @@ class PlayerViewmodel extends ChangeNotifier {
   final MediaSessionHandler _mediaSessionHandler;
   final AudioSession _audioSession;
 
+  // Queue
   List<Song> _queue = [];
   List<Song> _originalQueue = [];
   int _currentIndex = -1;
   int? _lastPushedSongId;
 
+  // State
   QueueSource? source;
   bool isPlaying = false;
   Duration position = .zero;
   Duration duration = .zero;
   bool shuffleEnabled = false;
   RepeatMode repeatMode = .none;
-  double volume = 50.0;
+  double volume = Platform.isAndroid ? _androidAudioVolume : 50.0;
   bool isMuted = false;
   bool _resumeAfterInterruption = false;
 
@@ -112,6 +116,7 @@ class PlayerViewmodel extends ChangeNotifier {
       ? _queue[_currentIndex]
       : null;
 
+  // Subscriptions
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration>? _durationSub;
   StreamSubscription<bool>? _playingSub;

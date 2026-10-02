@@ -9,17 +9,22 @@ class SongsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final songs = context.watch<SongViewmodel>().songs;
+    final songVm = context.watch<SongViewmodel>();
+    final filteredSongs = songVm.filteredSongs;
 
-    if (songs.isEmpty) {
+    if (songVm.songs.isEmpty) {
       return const Center(child: Text('No songs yet'));
     }
 
+    if (filteredSongs.isEmpty) {
+      return const Center(child: Text('No results'));
+    }
+
     return ListView.builder(
-      itemCount: songs.length,
+      itemCount: filteredSongs.length,
       itemBuilder: (context, index) => SongTile(
-        song: songs[index],
-        queue: songs,
+        song: filteredSongs[index],
+        queue: filteredSongs,
         index: index,
         source: const LibraryQueueSource(),
       ),

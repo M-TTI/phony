@@ -47,7 +47,7 @@ class SongTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        song.title,
+                        song.titleLabel,
                         style: const TextStyle(
                           color: t.onPrimary,
                           fontSize: 16,
@@ -55,7 +55,7 @@ class SongTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        song.artist ?? '-',
+                        song.artistLabel ?? '-',
                         style: const TextStyle(
                           color: t.onPrimaryMuted,
                           fontSize: 10,

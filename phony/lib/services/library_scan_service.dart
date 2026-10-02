@@ -136,6 +136,7 @@ class LibraryScanService {
         title: metadata.title ?? fallbackTitle,
         artist: metadata.artist,
         hasMetaData: metadata.title != null,
+        isFromOsz: false,
         duration: metadata.duration?.inSeconds ?? 0,
         imagePath: imagePath,
         file: SongFile(
@@ -146,8 +147,11 @@ class LibraryScanService {
           duration: metadata.duration?.inSeconds ?? 0,
           checksum: checksum,
           size: stat.size,
-          lastModified: stat.modified,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         ),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       ),
       coverChecked: true,
     );

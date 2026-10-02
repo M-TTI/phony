@@ -6,22 +6,29 @@ import 'package:phony/repositories/song_repository.dart';
 import 'package:phony/services/library_reset_service.dart';
 import 'package:phony/services/library_scan_service.dart';
 import 'package:phony/services/osz_import_service.dart';
+import 'package:phony/utils/search_utils.dart';
 
 class SongViewmodel extends ChangeNotifier {
+  // Services
   final SongRepository _songRepository;
-
   final LibraryScanService _scanService;
   final OszImportService _importService;
   final LibraryResetService _libraryResetService;
 
-  List<Song> songs = [];
+  // Subscriptions
   StreamSubscription<List<Song>>? _streamSubscription;
 
+  // State
+  List<Song> songs = [];
   bool isScanning = false;
   bool isImporting = false;
-
   int importDone = 0;
   int importTotal = 0;
+
+  // Search
+  String _query = '';
+  List<Song> filteredSongs = [];
+  Map<int, String> _haystacks = {};
 
   SongViewmodel(
     this._songRepository,
@@ -31,8 +38,41 @@ class SongViewmodel extends ChangeNotifier {
   ) {
     _streamSubscription = _songRepository.watchAll().listen((data) {
       songs = data;
+
+      final Map<int, String> next = {};
+      data.forEach(
+        (s) => next[s.id] = _haystacks[s.id] ?? buildSearchHaystack(s),
+      );
+      _haystacks = next;
+
+      _applyFilter();
       notifyListeners();
     });
+  }
+
+  void _applyFilter() {
+    if (_query.isEmpty) {
+      filteredSongs = songs;
+      return;
+    }
+
+    final List<String> terms = _query.split(RegExp(r'\s+'));
+
+    filteredSongs = songs
+        .where((s) => matchesTerms(_haystacks[s.id]!, terms))
+        .toList();
+  }
+
+  void setQuery(String value) {
+    final normalized = normalizeString(value.trim());
+
+    if (_query == normalized) {
+      return;
+    }
+
+    _query = normalized;
+    _applyFilter();
+    notifyListeners();
   }
 
   Future<void> delete(int id) => _songRepository.delete(id);
