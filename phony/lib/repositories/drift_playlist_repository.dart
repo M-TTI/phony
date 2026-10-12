@@ -31,9 +31,8 @@ class DriftPlaylistRepository implements PlaylistRepository {
       .map((rows) => rows.map((r) => _toSongModel(r.$1, r.$2)).toList());
 
   @override
-  Future<int> create(String name) => _db.insertPlaylist(
-    PlaylistsCompanion(name: Value(name)),
-  );
+  Future<int> create(String name) =>
+      _db.insertPlaylist(PlaylistsCompanion(name: Value(name)));
 
   @override
   Future<void> delete(int id) => _db.deletePlaylist(id);
